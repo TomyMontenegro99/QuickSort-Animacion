@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QuickSort Animado</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="hero">
+        <h1>Animación del algoritmo QuickSort</h1>
+        <p>
+          Ingresa diez números enteros, observa cómo se almacenan en la lista y
+          presiona <strong>“Ordenar con QuickSort”</strong> para seguir el proceso
+          completo paso a paso.
+        </p>
+      </header>
+
+      <section class="input-panel" aria-labelledby="inputs-title">
+        <div class="panel-header">
+          <h2 id="inputs-title">Números de entrada</h2>
+          <div class="panel-actions">
+            <button id="randomButton" type="button" class="ghost">Generar aleatorios</button>
+          </div>
+        </div>
+        <p class="panel-description">
+          Cada campo representa una posición en la lista. Mientras escribes verás
+          cómo se actualiza la visualización.
+        </p>
+        <div id="inputsContainer" class="inputs"></div>
+      </section>
+
+      <section class="visual-panel" aria-labelledby="visual-title">
+        <h2 id="visual-title">Visualización del arreglo</h2>
+        <div id="numberDisplay" class="number-display" aria-live="polite"></div>
+        <div class="legend">
+          <span><span class="sample pivot"></span> Pivote</span>
+          <span><span class="sample comparing"></span> Comparando</span>
+          <span><span class="sample focus-range"></span> Sub-arreglo activo</span>
+          <span><span class="sample sorted"></span> Posición final</span>
+        </div>
+      </section>
+
+      <section class="controls" aria-label="Controles de animación">
+        <div class="speed-control">
+          <label for="speedSelect">Velocidad</label>
+          <select id="speedSelect">
+            <option value="fast">Rápida</option>
+            <option value="normal" selected>Normal</option>
+            <option value="slow">Lenta</option>
+          </select>
+        </div>
+        <button id="resetButton" type="button" class="ghost">Restablecer</button>
+        <button id="sortButton" type="button" class="primary">
+          Ordenar con QuickSort
+        </button>
+      </section>
+
+      <section class="status" aria-live="polite">
+        <h2>Explicación</h2>
+        <p id="statusMessage">Ingresa los 10 números para comenzar.</p>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>
+        QuickSort divide la lista en sub-arreglos utilizando un pivote y ordena
+        cada parte de forma recursiva. Esta demostración muestra cada
+        comparación, intercambio y colocación definitiva.
+      </p>
+    </footer>
+
+    <script src="app.js" type="module"></script>
+  </body>
+</html>
