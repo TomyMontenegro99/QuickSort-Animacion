@@ -20,16 +20,6 @@ seguir paso a paso el algoritmo de QuickSort mediante animaciones.
    python3 -m http.server 8000
    ```
 
-   > ℹ️ Si Visual Studio Code muestra el mensaje `no se encontró Python`,
-   > tienes varias alternativas:
-   >
-   > - Instalar Python desde la Microsoft Store y volver a ejecutar el comando.
-   > - Usar la extensión **Live Server** de VS Code y pulsar "Open with Live Server" sobre `index.html`.
-   > - Si tienes Node.js instalado, ejecutar `npx serve .` desde la carpeta del proyecto.
-   > - Abrir directamente el archivo `index.html` en el navegador (doble clic) sin servidor.
-
-3. Abre <http://localhost:8000> en el navegador y selecciona `index.html` (o
-   utiliza la opción que hayas elegido en el paso anterior).
 
 ¡Listo! Ya puedes experimentar con diferentes conjuntos de números y visualizar
 cómo QuickSort los ordena paso a paso.
