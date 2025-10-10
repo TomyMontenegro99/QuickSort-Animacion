@@ -20,7 +20,6 @@ seguir paso a paso el algoritmo de QuickSort mediante animaciones.
    python3 -m http.server 8000
    ```
 
-3. Abre <http://localhost:8000> en el navegador y selecciona `index.html`.
 
 ¡Listo! Ya puedes experimentar con diferentes conjuntos de números y visualizar
 cómo QuickSort los ordena paso a paso.
