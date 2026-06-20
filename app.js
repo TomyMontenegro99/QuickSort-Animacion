@@ -22,6 +22,7 @@ const recursiveCallCount = document.getElementById('recursiveCallCount');
 const maxDepthCount = document.getElementById('maxDepthCount');
 const numberCountInput = document.getElementById('numberCount');
 const applyCountButton = document.getElementById('applyCountButton');
+const recursionTreeContainer = document.getElementById('recursionTree');
 
 const state = {
   inputCount: DEFAULT_INPUT_COUNT,
@@ -39,6 +40,8 @@ const state = {
   currentStepIndex: -1,
   runId: 0,
   manualNavigation: false,
+  recursionTree: null,
+  recursionNodeElements: new Map(),
   pivotIndex: null,
   pointerIndex: null,
 };
@@ -50,6 +53,7 @@ function init() {
   renderNumbers(state.numbers);
   attachEvents();
   resetStatistics();
+  clearRecursionTree();
   updateStatus('Ingresa los números para comenzar.');
 }
 
@@ -76,6 +80,7 @@ function attachEvents() {
     updateInputs(initialValues);
     renderNumbers(initialValues);
     resetStatistics();
+    clearRecursionTree();
     updateStatus('Se reiniciaron los campos. Introduce nuevos valores.');
   });
 
@@ -85,6 +90,7 @@ function attachEvents() {
     updateInputs(randomValues);
     renderNumbers(randomValues);
     resetStatistics();
+    clearRecursionTree();
     updateStatus('Se generó una lista de números aleatorios.');
   });
 }
@@ -123,6 +129,7 @@ function applyInputCount() {
   createInputs();
   renderNumbers(nextValues);
   resetStatistics();
+  clearRecursionTree();
   updateStepControls();
   updateStatus(`La lista ahora contiene ${requestedCount} ${requestedCount === 1 ? 'número' : 'números'}.`);
 }
@@ -156,6 +163,7 @@ function handleInputChange(index, event) {
   }
 
   resetStatistics();
+  clearRecursionTree();
 
   const value = event.target.value;
   const numericValue = Number(value);
@@ -235,13 +243,17 @@ function handleSortClick() {
   state.animationPaused = false;
   state.manualNavigation = false;
   state.initialNumbers = numbers.slice();
-  state.steps = buildQuickSortSteps(numbers);
+  const execution = buildQuickSortExecution(numbers);
+  state.steps = execution.steps;
+  state.recursionTree = execution.recursionTree;
   state.stepFrames = buildQuickSortFrames(numbers, state.steps);
   state.currentStepIndex = -1;
   resetPauseControl();
   toggleControls(true);
   updateStepControls();
   renderNumbers(numbers);
+  renderRecursionTree(state.recursionTree);
+  updateRecursionTree(-1);
   void startAutomaticAnimation(0);
 }
 
@@ -463,9 +475,89 @@ function resetStatistics() {
   });
 }
 
-function buildQuickSortSteps(values) {
+function clearRecursionTree() {
+  state.recursionTree = null;
+  state.recursionNodeElements.clear();
+  recursionTreeContainer.innerHTML = '';
+
+  const placeholder = document.createElement('p');
+  placeholder.className = 'tree-placeholder';
+  placeholder.textContent = 'Inicia la animación para generar el árbol.';
+  recursionTreeContainer.appendChild(placeholder);
+}
+
+function renderRecursionTree(root) {
+  recursionTreeContainer.innerHTML = '';
+  state.recursionNodeElements.clear();
+
+  if (!root) {
+    clearRecursionTree();
+    return;
+  }
+
+  const rootList = document.createElement('ul');
+  rootList.appendChild(createRecursionTreeItem(root));
+  recursionTreeContainer.appendChild(rootList);
+}
+
+function createRecursionTreeItem(node) {
+  const item = document.createElement('li');
+  const nodeElement = document.createElement('div');
+  nodeElement.className = 'tree-node pending';
+  nodeElement.dataset.nodeId = node.id;
+
+  const range = document.createElement('span');
+  range.textContent =
+    node.left === node.right
+      ? `Nivel ${node.depth} · Posición ${node.left + 1}`
+      : `Nivel ${node.depth} · Posiciones ${node.left + 1}–${node.right + 1}`;
+
+  const values = document.createElement('strong');
+  values.textContent = `[${node.values.join(', ')}]`;
+
+  const pivot = document.createElement('small');
+  pivot.textContent =
+    node.pivotValue === null ? 'Caso base' : `Pivote: ${node.pivotValue}`;
+
+  nodeElement.appendChild(range);
+  nodeElement.appendChild(values);
+  nodeElement.appendChild(pivot);
+  item.appendChild(nodeElement);
+  state.recursionNodeElements.set(node.id, { element: nodeElement, node });
+
+  if (node.children.length > 0) {
+    const children = document.createElement('ul');
+    node.children.forEach((child) => {
+      children.appendChild(createRecursionTreeItem(child));
+    });
+    item.appendChild(children);
+  }
+
+  return item;
+}
+
+function updateRecursionTree(stepIndex) {
+  const activeNodeId = stepIndex >= 0 ? state.steps[stepIndex]?.treeNodeId : null;
+
+  state.recursionNodeElements.forEach(({ element, node }) => {
+    element.classList.remove('pending', 'visited', 'active', 'complete');
+
+    if (stepIndex < node.firstStepIndex) {
+      element.classList.add('pending');
+    } else if (node.id === activeNodeId) {
+      element.classList.add('active');
+    } else if (stepIndex >= node.completeStepIndex) {
+      element.classList.add('complete');
+    } else {
+      element.classList.add('visited');
+    }
+  });
+}
+
+function buildQuickSortExecution(values) {
   const arr = values.slice();
   const steps = [];
+  let nextNodeId = 0;
   const statistics = {
     comparisons: 0,
     swaps: 0,
@@ -473,37 +565,58 @@ function buildQuickSortSteps(values) {
     maxDepth: 0,
   };
 
-  function addStep(step) {
+  function addStep(step, treeNodeId = null) {
     steps.push({
       ...step,
+      treeNodeId,
       statistics: { ...statistics },
     });
   }
 
-  function quickSort(left, right, depth = 1) {
+  function quickSort(left, right, depth = 1, parentNode = null) {
     statistics.recursiveCalls++;
     statistics.maxDepth = Math.max(statistics.maxDepth, depth);
 
-    if (left >= right) {
-      if (left === right) {
-        addStep({ type: 'range', left, right });
-        addStep({ type: 'single', index: left });
-        addStep({ type: 'range-clear', left, right });
-      }
-      return;
+    if (left > right) return null;
+
+    const node = {
+      id: nextNodeId++,
+      left,
+      right,
+      depth,
+      values: arr.slice(left, right + 1),
+      pivotValue: null,
+      pivotIndex: null,
+      firstStepIndex: steps.length,
+      completeStepIndex: null,
+      children: [],
+    };
+    if (parentNode) parentNode.children.push(node);
+
+    if (left === right) {
+      addStep({ type: 'range', left, right }, node.id);
+      addStep({ type: 'single', index: left }, node.id);
+      addStep({ type: 'range-clear', left, right }, node.id);
+      node.completeStepIndex = steps.length - 1;
+      return node;
     }
-    addStep({ type: 'range', left, right });
-    const pivotIndex = partition(left, right);
-    addStep({ type: 'range-clear', left, right });
-    quickSort(left, pivotIndex - 1, depth + 1);
-    quickSort(pivotIndex + 1, right, depth + 1);
+
+    addStep({ type: 'range', left, right }, node.id);
+    const pivotIndex = partition(left, right, node);
+    node.pivotIndex = pivotIndex;
+    addStep({ type: 'range-clear', left, right }, node.id);
+    node.completeStepIndex = steps.length - 1;
+    quickSort(left, pivotIndex - 1, depth + 1, node);
+    quickSort(pivotIndex + 1, right, depth + 1, node);
+    return node;
   }
 
-  function partition(left, right) {
+  function partition(left, right, node) {
     const pivotValue = arr[right];
-    addStep({ type: 'pivot', index: right, pivotValue, left, right });
+    node.pivotValue = pivotValue;
+    addStep({ type: 'pivot', index: right, pivotValue, left, right }, node.id);
     let i = left;
-    addStep({ type: 'pointer', index: i });
+    addStep({ type: 'pointer', index: i }, node.id);
 
     for (let j = left; j < right; j++) {
       const currentValue = arr[j];
@@ -517,7 +630,7 @@ function buildQuickSortSteps(values) {
         value: currentValue,
         pivotValue,
         result: isLessOrEqual,
-      });
+      }, node.id);
       if (isLessOrEqual) {
         if (i !== j) statistics.swaps++;
         addStep({
@@ -525,34 +638,38 @@ function buildQuickSortSteps(values) {
           from: j,
           to: i,
           value: currentValue,
-        });
+        }, node.id);
         if (i !== j) {
           const temp = arr[i];
           arr[i] = arr[j];
           arr[j] = temp;
         }
         i++;
-        addStep({ type: 'pointer', index: i });
+        addStep({ type: 'pointer', index: i }, node.id);
       } else {
         addStep({
           type: 'greater',
           index: j,
           value: currentValue,
-        });
+        }, node.id);
       }
     }
     if (right !== i) statistics.swaps++;
-    addStep({ type: 'pivot-swap', from: right, to: i, pivotValue });
+    addStep({ type: 'pivot-swap', from: right, to: i, pivotValue }, node.id);
     const temp = arr[i];
     arr[i] = arr[right];
     arr[right] = temp;
-    addStep({ type: 'pivot-placed', index: i, pivotValue });
+    addStep({ type: 'pivot-placed', index: i, pivotValue }, node.id);
     return i;
   }
 
-  quickSort(0, arr.length - 1);
+  const recursionTree = quickSort(0, arr.length - 1);
   addStep({ type: 'sorted-all' });
-  return steps;
+  return { steps, recursionTree };
+}
+
+function buildQuickSortSteps(values) {
+  return buildQuickSortExecution(values).steps;
 }
 
 function buildQuickSortFrames(values, steps) {
@@ -680,6 +797,7 @@ function renderStepFrame(index) {
   if (index < 0) {
     renderNumbers(state.initialNumbers);
     resetStatistics();
+    updateRecursionTree(-1);
     updateStatus('Antes del primer paso: el arreglo conserva su orden original.');
     return;
   }
@@ -696,6 +814,7 @@ function renderStepFrame(index) {
     state.cards[cardIndex]?.classList.add(className);
   });
   updateStatistics(frame.statistics);
+  updateRecursionTree(index);
   updateStatus(frame.status);
 }
 
@@ -710,6 +829,7 @@ async function animateQuickSort(startIndex = 0) {
     state.currentStepIndex = index;
     updateStepControls();
     updateStatistics(step.statistics);
+    updateRecursionTree(index);
     switch (step.type) {
       case 'range':
         highlightRange(step.left, step.right);

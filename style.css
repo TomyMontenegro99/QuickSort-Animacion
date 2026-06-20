@@ -49,6 +49,7 @@ body::before {
 
 .input-panel,
 .visual-panel,
+.recursion-panel,
 .statistics,
 .status {
   margin-top: 2.5rem;
@@ -296,6 +297,115 @@ button.step-button {
   margin-bottom: 1.25rem;
 }
 
+.recursion-panel h2 {
+  margin-bottom: 0.35rem;
+}
+
+.recursion-description {
+  margin: 0 0 1rem;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.recursion-tree {
+  overflow: auto;
+  padding: 1.25rem;
+  border: 1px dashed rgba(79, 70, 229, 0.35);
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.03);
+}
+
+.tree-placeholder {
+  margin: 0;
+  color: #64748b;
+  text-align: center;
+}
+
+.recursion-tree ul {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin: 0;
+  padding: 1.5rem 0 0;
+  list-style: none;
+}
+
+.recursion-tree > ul {
+  min-width: max-content;
+  padding-top: 0;
+}
+
+.recursion-tree li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.recursion-tree li::before {
+  content: "";
+  position: absolute;
+  top: -1.5rem;
+  left: 50%;
+  width: 1px;
+  height: 1.5rem;
+  background: rgba(99, 102, 241, 0.35);
+}
+
+.recursion-tree > ul > li::before {
+  display: none;
+}
+
+.tree-node {
+  min-width: 130px;
+  max-width: 210px;
+  padding: 0.75rem 0.9rem;
+  border: 2px solid rgba(148, 163, 184, 0.45);
+  border-radius: 12px;
+  background: white;
+  color: #334155;
+  text-align: center;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.tree-node span,
+.tree-node small {
+  display: block;
+}
+
+.tree-node span {
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.tree-node strong {
+  display: block;
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.tree-node small {
+  color: #7c3aed;
+  font-weight: 600;
+}
+
+.tree-node.visited {
+  border-color: rgba(59, 130, 246, 0.5);
+}
+
+.tree-node.active {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
+  transform: translateY(-2px);
+}
+
+.tree-node.complete {
+  border-color: rgba(16, 185, 129, 0.65);
+  background: rgba(16, 185, 129, 0.08);
+}
+
 .number-display {
   position: relative;
   display: grid;
@@ -518,10 +628,6 @@ button.step-button {
   }
 }
 
-@media (max-width: 520px) {
-  .inputs {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-=======
 @media (max-width: 520px) {
   .inputs {
     grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));

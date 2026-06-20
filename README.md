@@ -14,6 +14,7 @@ seguir paso a paso el algoritmo de QuickSort mediante animaciones.
 - Navegación paso a paso con controles para avanzar y retroceder.
 - Estadísticas en tiempo real de comparaciones, intercambios, llamadas
   recursivas y profundidad máxima.
+- Árbol de recursión sincronizado con el subarreglo activo y la navegación de pasos.
 - Explicaciones en español de cada paso del algoritmo.
 
 ## Ejecución
