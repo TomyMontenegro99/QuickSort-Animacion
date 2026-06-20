@@ -23,6 +23,7 @@ const maxDepthCount = document.getElementById('maxDepthCount');
 const numberCountInput = document.getElementById('numberCount');
 const applyCountButton = document.getElementById('applyCountButton');
 const recursionTreeContainer = document.getElementById('recursionTree');
+const stepHistoryContainer = document.getElementById('stepHistory');
 
 const state = {
   inputCount: DEFAULT_INPUT_COUNT,
@@ -42,6 +43,8 @@ const state = {
   manualNavigation: false,
   recursionTree: null,
   recursionNodeElements: new Map(),
+  historyButtons: [],
+  maxReachedStepIndex: -1,
   pivotIndex: null,
   pointerIndex: null,
 };
@@ -54,6 +57,7 @@ function init() {
   attachEvents();
   resetStatistics();
   clearRecursionTree();
+  clearStepHistory();
   updateStatus('Ingresa los números para comenzar.');
 }
 
@@ -81,6 +85,7 @@ function attachEvents() {
     renderNumbers(initialValues);
     resetStatistics();
     clearRecursionTree();
+    clearStepHistory();
     updateStatus('Se reiniciaron los campos. Introduce nuevos valores.');
   });
 
@@ -91,6 +96,7 @@ function attachEvents() {
     renderNumbers(randomValues);
     resetStatistics();
     clearRecursionTree();
+    clearStepHistory();
     updateStatus('Se generó una lista de números aleatorios.');
   });
 }
@@ -130,6 +136,7 @@ function applyInputCount() {
   renderNumbers(nextValues);
   resetStatistics();
   clearRecursionTree();
+  clearStepHistory();
   updateStepControls();
   updateStatus(`La lista ahora contiene ${requestedCount} ${requestedCount === 1 ? 'número' : 'números'}.`);
 }
@@ -164,6 +171,7 @@ function handleInputChange(index, event) {
 
   resetStatistics();
   clearRecursionTree();
+  clearStepHistory();
 
   const value = event.target.value;
   const numericValue = Number(value);
@@ -247,6 +255,7 @@ function handleSortClick() {
   state.steps = execution.steps;
   state.recursionTree = execution.recursionTree;
   state.stepFrames = buildQuickSortFrames(numbers, state.steps);
+  renderStepHistory();
   state.currentStepIndex = -1;
   resetPauseControl();
   toggleControls(true);
@@ -298,13 +307,17 @@ function handlePauseClick() {
 }
 
 function navigateStep(offset) {
+  navigateToStep(state.currentStepIndex + offset);
+}
+
+function navigateToStep(requestedIndex) {
   if (!state.animationRunning || !state.animationPaused) return;
 
   const targetIndex = Math.min(
     state.steps.length - 1,
-    Math.max(-1, state.currentStepIndex + offset)
+    Math.max(-1, requestedIndex)
   );
-  if (targetIndex === state.currentStepIndex) return;
+  if (targetIndex === state.currentStepIndex && state.manualNavigation) return;
 
   if (!state.manualNavigation) {
     state.manualNavigation = true;
@@ -554,6 +567,86 @@ function updateRecursionTree(stepIndex) {
   });
 }
 
+function clearStepHistory() {
+  state.historyButtons = [];
+  state.maxReachedStepIndex = -1;
+  stepHistoryContainer.innerHTML = '';
+
+  const placeholder = document.createElement('li');
+  placeholder.className = 'history-placeholder';
+  placeholder.textContent = 'Inicia la animación para registrar operaciones.';
+  stepHistoryContainer.appendChild(placeholder);
+}
+
+function renderStepHistory() {
+  stepHistoryContainer.innerHTML = '';
+  state.historyButtons = [];
+  state.maxReachedStepIndex = -1;
+
+  state.stepFrames.forEach((frame, index) => {
+    const item = document.createElement('li');
+    const button = document.createElement('button');
+    const stepNumber = document.createElement('span');
+    const operation = document.createElement('span');
+
+    item.hidden = true;
+    button.type = 'button';
+    button.className = 'history-button';
+    button.disabled = true;
+    button.title = frame.status;
+    button.addEventListener('click', () => handleHistoryNavigation(index));
+
+    stepNumber.className = 'history-step-number';
+    stepNumber.textContent = `Paso ${index + 1}`;
+    operation.className = 'history-operation';
+    operation.textContent = frame.status.replace(/^Paso \d+:\s*/, '');
+
+    button.appendChild(stepNumber);
+    button.appendChild(operation);
+    item.appendChild(button);
+    stepHistoryContainer.appendChild(item);
+    state.historyButtons.push(button);
+  });
+}
+
+function updateStepHistory(stepIndex) {
+  if (stepIndex >= 0) {
+    state.maxReachedStepIndex = Math.max(state.maxReachedStepIndex, stepIndex);
+  }
+
+  state.historyButtons.forEach((button, index) => {
+    const isCurrent = index === stepIndex;
+    const wasReached = index <= state.maxReachedStepIndex;
+    button.parentElement.hidden = !wasReached;
+    button.disabled = !wasReached;
+    button.classList.toggle('visited', wasReached && !isCurrent);
+    button.classList.toggle('current', isCurrent);
+
+    if (isCurrent) {
+      button.setAttribute('aria-current', 'step');
+    } else {
+      button.removeAttribute('aria-current');
+    }
+  });
+
+  if (stepIndex >= 0 && stepIndex === state.maxReachedStepIndex) {
+    stepHistoryContainer.scrollTop = stepHistoryContainer.scrollHeight;
+  }
+}
+
+function handleHistoryNavigation(stepIndex) {
+  if (stepIndex < 0 || stepIndex > state.maxReachedStepIndex) return;
+
+  if (state.animationRunning) {
+    if (!state.animationPaused) handlePauseClick();
+    navigateToStep(stepIndex);
+    return;
+  }
+
+  state.currentStepIndex = stepIndex;
+  renderStepFrame(stepIndex);
+}
+
 function buildQuickSortExecution(values) {
   const arr = values.slice();
   const steps = [];
@@ -798,6 +891,7 @@ function renderStepFrame(index) {
     renderNumbers(state.initialNumbers);
     resetStatistics();
     updateRecursionTree(-1);
+    updateStepHistory(-1);
     updateStatus('Antes del primer paso: el arreglo conserva su orden original.');
     return;
   }
@@ -815,6 +909,7 @@ function renderStepFrame(index) {
   });
   updateStatistics(frame.statistics);
   updateRecursionTree(index);
+  updateStepHistory(index);
   updateStatus(frame.status);
 }
 
@@ -830,6 +925,7 @@ async function animateQuickSort(startIndex = 0) {
     updateStepControls();
     updateStatistics(step.statistics);
     updateRecursionTree(index);
+    updateStepHistory(index);
     switch (step.type) {
       case 'range':
         highlightRange(step.left, step.right);

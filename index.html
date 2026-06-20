@@ -120,10 +120,19 @@
         </div>
       </section>
 
-      <section class="status" aria-live="polite">
-        <h2>Explicación</h2>
-        <p id="statusMessage">Ingresa los números para comenzar.</p>
+      <section class="history-panel" aria-labelledby="history-title">
+        <h2 id="history-title">Historial de pasos</h2>
+        <p class="history-description">
+          Selecciona una operación alcanzada para revisar el estado del arreglo en ese momento.
+        </p>
+        <ol id="stepHistory" class="step-history">
+          <li class="history-placeholder">Inicia la animación para registrar operaciones.</li>
+        </ol>
       </section>
+
+      <p id="statusMessage" class="visually-hidden" aria-live="polite">
+        Ingresa los números para comenzar.
+      </p>
     </main>
 
     <footer class="footer">
