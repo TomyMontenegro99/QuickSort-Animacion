@@ -1,11 +1,11 @@
 # QuickSort Animación
 
-Aplicación web interactiva que permite introducir 10 números, visualizarlos y
+Aplicación web interactiva que permite introducir una cantidad variable de números, visualizarlos y
 seguir paso a paso el algoritmo de QuickSort mediante animaciones.
 
 ## Características
 
-- Ingreso de 10 números con actualización visual inmediata.
+- Cantidad ajustable entre 1 y 30 números con actualización visual inmediata.
 - Botón para generar valores aleatorios y opción de reinicio.
 - Animaciones que muestran pivote, comparaciones, intercambios y elementos
   ordenados.

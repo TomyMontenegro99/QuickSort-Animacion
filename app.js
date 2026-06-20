@@ -1,4 +1,6 @@
-const INPUT_COUNT = 10;
+const DEFAULT_INPUT_COUNT = 10;
+const MIN_INPUT_COUNT = 1;
+const MAX_INPUT_COUNT = 30;
 const RANDOM_MIN = 1;
 const RANDOM_MAX = 99;
 const ANIMATION_BASE_DELAY = 550;
@@ -18,9 +20,12 @@ const comparisonCount = document.getElementById('comparisonCount');
 const swapCount = document.getElementById('swapCount');
 const recursiveCallCount = document.getElementById('recursiveCallCount');
 const maxDepthCount = document.getElementById('maxDepthCount');
+const numberCountInput = document.getElementById('numberCount');
+const applyCountButton = document.getElementById('applyCountButton');
 
 const state = {
-  numbers: Array.from({ length: INPUT_COUNT }, () => randomInt()),
+  inputCount: DEFAULT_INPUT_COUNT,
+  numbers: Array.from({ length: DEFAULT_INPUT_COUNT }, () => randomInt()),
   cards: [],
   animationRunning: false,
   animationPaused: false,
@@ -45,7 +50,7 @@ function init() {
   renderNumbers(state.numbers);
   attachEvents();
   resetStatistics();
-  updateStatus('Ingresa los 10 números para comenzar.');
+  updateStatus('Ingresa los números para comenzar.');
 }
 
 function attachEvents() {
@@ -53,6 +58,13 @@ function attachEvents() {
   pauseButton.addEventListener('click', handlePauseClick);
   previousButton.addEventListener('click', () => navigateStep(-1));
   nextButton.addEventListener('click', () => navigateStep(1));
+  applyCountButton.addEventListener('click', applyInputCount);
+  numberCountInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') applyInputCount();
+  });
+  numberCountInput.addEventListener('input', () => {
+    numberCountInput.setCustomValidity('');
+  });
   speedControl.addEventListener('input', () => {
     state.animationSpeed = Number(speedControl.value);
     speedValue.value = `${state.animationSpeed}x`;
@@ -60,7 +72,7 @@ function attachEvents() {
 
   resetButton.addEventListener('click', () => {
     if (state.animationRunning) return;
-    const initialValues = Array.from({ length: INPUT_COUNT }, () => 0);
+    const initialValues = Array.from({ length: state.inputCount }, () => 0);
     updateInputs(initialValues);
     renderNumbers(initialValues);
     resetStatistics();
@@ -69,7 +81,7 @@ function attachEvents() {
 
   randomButton.addEventListener('click', () => {
     if (state.animationRunning) return;
-    const randomValues = Array.from({ length: INPUT_COUNT }, () => randomInt());
+    const randomValues = Array.from({ length: state.inputCount }, () => randomInt());
     updateInputs(randomValues);
     renderNumbers(randomValues);
     resetStatistics();
@@ -77,9 +89,47 @@ function attachEvents() {
   });
 }
 
+function applyInputCount() {
+  if (state.animationRunning) return;
+
+  const requestedCount = Number(numberCountInput.value);
+  const countIsValid =
+    Number.isInteger(requestedCount) &&
+    requestedCount >= MIN_INPUT_COUNT &&
+    requestedCount <= MAX_INPUT_COUNT;
+
+  if (!countIsValid) {
+    numberCountInput.setCustomValidity(
+      `Ingresa una cantidad entera entre ${MIN_INPUT_COUNT} y ${MAX_INPUT_COUNT}.`
+    );
+    numberCountInput.reportValidity();
+    updateStatus(`La cantidad debe estar entre ${MIN_INPUT_COUNT} y ${MAX_INPUT_COUNT}.`);
+    return;
+  }
+
+  numberCountInput.setCustomValidity('');
+  const currentValues = collectNumbers() || state.numbers;
+  const nextValues = Array.from({ length: requestedCount }, (_, index) =>
+    index < currentValues.length ? currentValues[index] : randomInt()
+  );
+
+  state.inputCount = requestedCount;
+  state.numbers = nextValues;
+  state.initialNumbers = [];
+  state.steps = [];
+  state.stepFrames = [];
+  state.currentStepIndex = -1;
+
+  createInputs();
+  renderNumbers(nextValues);
+  resetStatistics();
+  updateStepControls();
+  updateStatus(`La lista ahora contiene ${requestedCount} ${requestedCount === 1 ? 'número' : 'números'}.`);
+}
+
 function createInputs() {
   inputsContainer.innerHTML = '';
-  for (let i = 0; i < INPUT_COUNT; i++) {
+  for (let i = 0; i < state.inputCount; i++) {
     const wrapper = document.createElement('label');
     wrapper.className = 'input-wrapper';
     wrapper.dataset.index = i;
@@ -284,6 +334,8 @@ function toggleControls(disabled) {
   resetButton.disabled = disabled;
   randomButton.disabled = disabled;
   pauseButton.disabled = !disabled;
+  numberCountInput.disabled = disabled;
+  applyCountButton.disabled = disabled;
   const inputs = inputsContainer.querySelectorAll('input');
   inputs.forEach((input) => {
     input.disabled = disabled;

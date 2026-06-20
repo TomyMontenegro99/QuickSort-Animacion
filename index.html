@@ -11,7 +11,7 @@
       <header class="hero">
         <h1>Animación del algoritmo QuickSort</h1>
         <p>
-          Ingresa diez números enteros, observa cómo se almacenan en la lista y
+          Elige cuántos números enteros quieres ordenar, observa cómo se almacenan y
           presiona <strong>“Ordenar con QuickSort”</strong> para seguir el proceso
           completo paso a paso.
         </p>
@@ -21,6 +21,13 @@
         <div class="panel-header">
           <h2 id="inputs-title">Números de entrada</h2>
           <div class="panel-actions">
+            <label class="count-control" for="numberCount">
+              <span>Cantidad</span>
+              <input id="numberCount" type="number" min="1" max="30" value="10" />
+            </label>
+            <button id="applyCountButton" type="button" class="ghost">
+              Aplicar cantidad
+            </button>
             <button id="randomButton" type="button" class="ghost">Generar aleatorios</button>
           </div>
         </div>
@@ -104,7 +111,7 @@
 
       <section class="status" aria-live="polite">
         <h2>Explicación</h2>
-        <p id="statusMessage">Ingresa los 10 números para comenzar.</p>
+        <p id="statusMessage">Ingresa los números para comenzar.</p>
       </section>
     </main>
 
