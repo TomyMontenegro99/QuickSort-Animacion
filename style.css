@@ -202,6 +202,10 @@ button.pause-button.is-paused {
   color: #047857;
 }
 
+button.step-button {
+  padding-inline: 1.25rem;
+}
+
 .visual-panel h2 {
   margin-bottom: 1.25rem;
 }

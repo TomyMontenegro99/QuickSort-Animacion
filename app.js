@@ -10,6 +10,8 @@ const sortButton = document.getElementById('sortButton');
 const resetButton = document.getElementById('resetButton');
 const randomButton = document.getElementById('randomButton');
 const pauseButton = document.getElementById('pauseButton');
+const previousButton = document.getElementById('previousButton');
+const nextButton = document.getElementById('nextButton');
 const speedControl = document.getElementById('speedControl');
 const speedValue = document.getElementById('speedValue');
 
@@ -22,6 +24,12 @@ const state = {
   activeWait: null,
   runningAnimations: new Set(),
   statusBeforePause: '',
+  initialNumbers: [],
+  steps: [],
+  stepFrames: [],
+  currentStepIndex: -1,
+  runId: 0,
+  manualNavigation: false,
   pivotIndex: null,
   pointerIndex: null,
 };
@@ -38,6 +46,8 @@ function init() {
 function attachEvents() {
   sortButton.addEventListener('click', handleSortClick);
   pauseButton.addEventListener('click', handlePauseClick);
+  previousButton.addEventListener('click', () => navigateStep(-1));
+  nextButton.addEventListener('click', () => navigateStep(1));
   speedControl.addEventListener('input', () => {
     state.animationSpeed = Number(speedControl.value);
     speedValue.value = `${state.animationSpeed}x`;
@@ -153,7 +163,7 @@ function collectNumbers() {
   return valid ? values : null;
 }
 
-async function handleSortClick() {
+function handleSortClick() {
   if (state.animationRunning) {
     return;
   }
@@ -164,18 +174,26 @@ async function handleSortClick() {
   }
   state.animationRunning = true;
   state.animationPaused = false;
+  state.manualNavigation = false;
+  state.initialNumbers = numbers.slice();
+  state.steps = buildQuickSortSteps(numbers);
+  state.stepFrames = buildQuickSortFrames(numbers, state.steps);
+  state.currentStepIndex = -1;
   resetPauseControl();
   toggleControls(true);
+  updateStepControls();
   renderNumbers(numbers);
+  void startAutomaticAnimation(0);
+}
+
+async function startAutomaticAnimation(startIndex) {
   try {
-    await animateQuickSort(numbers);
-  } finally {
-    state.animationRunning = false;
-    state.animationPaused = false;
-    state.activeWait = null;
-    numberDisplay.classList.remove('paused');
-    resetPauseControl();
-    toggleControls(false);
+    const completed = await animateQuickSort(startIndex);
+    if (completed) finishAnimationSession();
+  } catch (error) {
+    console.error(error);
+    finishAnimationSession();
+    updateStatus('No se pudo completar la animación. Revisa la consola para obtener más detalles.');
   }
 }
 
@@ -194,11 +212,56 @@ function handlePauseClick() {
     pauseButton.textContent = 'Reanudar';
     statusMessage.textContent = 'Animación pausada. Presiona “Reanudar” para continuar.';
   } else {
-    state.runningAnimations.forEach((animation) => animation.play());
-    state.activeWait?.resume();
     pauseButton.textContent = 'Pausar';
-    statusMessage.textContent = state.statusBeforePause;
+    if (state.manualNavigation) {
+      state.manualNavigation = false;
+      void startAutomaticAnimation(state.currentStepIndex + 1);
+    } else {
+      state.runningAnimations.forEach((animation) => animation.play());
+      state.activeWait?.resume();
+      statusMessage.textContent = state.statusBeforePause;
+    }
   }
+
+  updateStepControls();
+}
+
+function navigateStep(offset) {
+  if (!state.animationRunning || !state.animationPaused) return;
+
+  const targetIndex = Math.min(
+    state.steps.length - 1,
+    Math.max(-1, state.currentStepIndex + offset)
+  );
+  if (targetIndex === state.currentStepIndex) return;
+
+  if (!state.manualNavigation) {
+    state.manualNavigation = true;
+    state.runId++;
+    state.activeWait?.cancel();
+    cancelRunningAnimations();
+  }
+
+  state.currentStepIndex = targetIndex;
+  renderStepFrame(targetIndex);
+  updateStepControls();
+}
+
+function cancelRunningAnimations() {
+  [...state.runningAnimations].forEach((animation) => animation.cancel());
+  state.runningAnimations.clear();
+}
+
+function finishAnimationSession() {
+  state.animationRunning = false;
+  state.animationPaused = false;
+  state.manualNavigation = false;
+  state.activeWait = null;
+  cancelRunningAnimations();
+  numberDisplay.classList.remove('paused');
+  resetPauseControl();
+  toggleControls(false);
+  updateStepControls();
 }
 
 function resetPauseControl() {
@@ -216,6 +279,13 @@ function toggleControls(disabled) {
   inputs.forEach((input) => {
     input.disabled = disabled;
   });
+}
+
+function updateStepControls() {
+  const navigationEnabled = state.animationRunning && state.animationPaused;
+  previousButton.disabled = !navigationEnabled || state.currentStepIndex <= -1;
+  nextButton.disabled =
+    !navigationEnabled || state.currentStepIndex >= state.steps.length - 1;
 }
 
 function clearHighlights() {
@@ -389,16 +459,162 @@ function buildQuickSortSteps(values) {
   return steps;
 }
 
-async function animateQuickSort(values) {
-  const steps = buildQuickSortSteps(values);
-  let stepNumber = 1;
+function buildQuickSortFrames(values, steps) {
+  const model = {
+    numbers: values.slice(),
+    range: null,
+    pivot: null,
+    pointer: null,
+    sorted: new Set(),
+  };
 
-  for (const step of steps) {
+  return steps.map((step, index) => {
+    const status = describeQuickSortStep(step, index + 1, model.numbers);
+    const highlights = [];
+
+    switch (step.type) {
+      case 'range':
+        model.range = [step.left, step.right];
+        break;
+      case 'range-clear':
+        model.range = null;
+        break;
+      case 'pivot':
+        model.pivot = step.index;
+        model.range = [step.left, step.right];
+        break;
+      case 'pointer':
+        model.pointer = step.index < model.numbers.length ? step.index : null;
+        break;
+      case 'compare':
+        model.pointer = step.i < model.numbers.length ? step.i : null;
+        model.pivot = step.pivot;
+        highlights.push({ index: step.index, className: 'comparing' });
+        break;
+      case 'swap-or-accept':
+        if (step.from === step.to) {
+          highlights.push({ index: step.from, className: 'accepted' });
+        } else {
+          [model.numbers[step.from], model.numbers[step.to]] = [
+            model.numbers[step.to],
+            model.numbers[step.from],
+          ];
+          highlights.push({ index: step.from, className: 'swapping' });
+          highlights.push({ index: step.to, className: 'swapping' });
+        }
+        break;
+      case 'greater':
+        highlights.push({ index: step.index, className: 'rejected' });
+        break;
+      case 'pivot-swap':
+        [model.numbers[step.from], model.numbers[step.to]] = [
+          model.numbers[step.to],
+          model.numbers[step.from],
+        ];
+        model.pivot = step.to;
+        highlights.push({ index: step.from, className: 'swapping' });
+        highlights.push({ index: step.to, className: 'swapping' });
+        break;
+      case 'pivot-placed':
+        model.pivot = null;
+        if (model.pointer === step.index) model.pointer = null;
+        model.sorted.add(step.index);
+        break;
+      case 'single':
+        if (model.pointer === step.index) model.pointer = null;
+        model.sorted.add(step.index);
+        break;
+      case 'sorted-all':
+        model.range = null;
+        model.pivot = null;
+        model.pointer = null;
+        model.sorted = new Set(model.numbers.map((_, itemIndex) => itemIndex));
+        break;
+      default:
+        break;
+    }
+
+    return {
+      numbers: model.numbers.slice(),
+      range: model.range ? model.range.slice() : null,
+      pivot: model.pivot,
+      pointer: model.pointer,
+      sorted: [...model.sorted],
+      highlights,
+      status,
+    };
+  });
+}
+
+function describeQuickSortStep(step, stepNumber, numbers) {
+  switch (step.type) {
+    case 'range':
+      return `Paso ${stepNumber}: Trabajando en el segmento entre las posiciones ${step.left + 1} y ${step.right + 1}.`;
+    case 'range-clear':
+      return `Paso ${stepNumber}: Finaliza el análisis del segmento ${step.left + 1} - ${step.right + 1}.`;
+    case 'pivot':
+      return `Paso ${stepNumber}: Se elige el pivote ${step.pivotValue} en la posición ${step.index + 1}.`;
+    case 'pointer':
+      return step.index < numbers.length
+        ? `Paso ${stepNumber}: El puntero i delimita ahora la posición ${step.index + 1}.`
+        : `Paso ${stepNumber}: El puntero i queda fuera del rango preparado para colocar el pivote.`;
+    case 'compare':
+      return `Paso ${stepNumber}: Comparando ${step.value} con el pivote ${step.pivotValue}. ${step.result ? 'Es menor o igual, se mueve a la izquierda.' : 'Permanece a la derecha.'}`;
+    case 'swap-or-accept':
+      return step.from === step.to
+        ? `Paso ${stepNumber}: ${step.value} ya está del lado correcto, solo se avanza el límite.`
+        : `Paso ${stepNumber}: Intercambiamos ${numbers[step.from]} con ${numbers[step.to]} para llevarlo al sub-arreglo izquierdo.`;
+    case 'greater':
+      return `Paso ${stepNumber}: ${step.value} es mayor que el pivote, queda temporalmente a la derecha.`;
+    case 'pivot-swap':
+      return `Paso ${stepNumber}: Colocamos el pivote ${step.pivotValue} en su lugar definitivo.`;
+    case 'pivot-placed':
+      return `Paso ${stepNumber}: El pivote ${step.pivotValue} queda fijo en la posición ${step.index + 1}.`;
+    case 'single':
+      return `Paso ${stepNumber}: La posición ${step.index + 1} ya estaba ordenada.`;
+    case 'sorted-all':
+      return 'Finalizado: todos los elementos se han ordenado con QuickSort.';
+    default:
+      return '';
+  }
+}
+
+function renderStepFrame(index) {
+  if (index < 0) {
+    renderNumbers(state.initialNumbers);
+    updateStatus('Antes del primer paso: el arreglo conserva su orden original.');
+    return;
+  }
+
+  const frame = state.stepFrames[index];
+  if (!frame) return;
+
+  renderNumbers(frame.numbers);
+  frame.sorted.forEach((sortedIndex) => markSorted(sortedIndex));
+  if (frame.range) highlightRange(frame.range[0], frame.range[1]);
+  if (frame.pivot !== null) setPivot(frame.pivot);
+  if (frame.pointer !== null) setPointer(frame.pointer);
+  frame.highlights.forEach(({ index: cardIndex, className }) => {
+    state.cards[cardIndex]?.classList.add(className);
+  });
+  updateStatus(frame.status);
+}
+
+async function animateQuickSort(startIndex = 0) {
+  const steps = state.steps;
+  const runId = ++state.runId;
+
+  for (let index = startIndex; index < steps.length; index++) {
+    if (runId !== state.runId) return false;
+    const step = steps[index];
+    const stepNumber = index + 1;
+    state.currentStepIndex = index;
+    updateStepControls();
     switch (step.type) {
       case 'range':
         highlightRange(step.left, step.right);
         updateStatus(`Paso ${stepNumber}: Trabajando en el segmento entre las posiciones ${step.left + 1} y ${step.right + 1}.`);
-        await waitForAnimation(0.8);
+        if (!(await waitForStep(0.8, runId))) return false;
         break;
       case 'range-clear':
         clearRangeHighlight();
@@ -407,13 +623,13 @@ async function animateQuickSort(values) {
             `Paso ${stepNumber}: Finaliza el análisis del segmento ${step.left + 1} - ${step.right + 1}.`
           );
         }
-        await waitForAnimation(0.4);
+        if (!(await waitForStep(0.4, runId))) return false;
         break;
       case 'pivot':
         setPivot(step.index);
         highlightRange(step.left, step.right);
         updateStatus(`Paso ${stepNumber}: Se elige el pivote ${step.pivotValue} en la posición ${step.index + 1}.`);
-        await waitForAnimation(0.9);
+        if (!(await waitForStep(0.9, runId))) return false;
         break;
       case 'pointer': {
         const pointerIndex = step.index < state.cards.length ? step.index : null;
@@ -423,7 +639,7 @@ async function animateQuickSort(values) {
             ? `Paso ${stepNumber}: El puntero i queda fuera del rango preparado para colocar el pivote.`
             : `Paso ${stepNumber}: El puntero i delimita ahora la posición ${pointerIndex + 1}.`
         );
-        await waitForAnimation(0.35);
+        if (!(await waitForStep(0.35, runId))) return false;
         break;
       }
       case 'compare': {
@@ -435,7 +651,7 @@ async function animateQuickSort(values) {
         updateStatus(
           `Paso ${stepNumber}: Comparando ${step.value} con el pivote ${step.pivotValue}. ${step.result ? 'Es menor o igual, se mueve a la izquierda.' : 'Permanece a la derecha.'}`
         );
-        await waitForAnimation();
+        if (!(await waitForStep(1, runId))) return false;
         card.classList.remove('comparing');
         break;
       }
@@ -447,15 +663,15 @@ async function animateQuickSort(values) {
         if (from === to) {
           fromCard.classList.add('accepted');
           updateStatus(`Paso ${stepNumber}: ${step.value} ya está del lado correcto, solo se avanza el límite.`);
-          await waitForAnimation(0.8);
+          if (!(await waitForStep(0.8, runId))) return false;
           fromCard.classList.remove('accepted');
         } else {
           fromCard.classList.add('swapping');
           toCard.classList.add('swapping');
           updateStatus(`Paso ${stepNumber}: Intercambiamos ${state.numbers[from]} con ${state.numbers[to]} para llevarlo al sub-arreglo izquierdo.`);
-          await waitForAnimation(0.45);
+          if (!(await waitForStep(0.45, runId))) return false;
           swapState(from, to);
-          await waitForAnimation(0.9);
+          if (!(await waitForStep(0.9, runId))) return false;
           fromCard.classList.remove('swapping');
           toCard.classList.remove('swapping');
         }
@@ -466,7 +682,7 @@ async function animateQuickSort(values) {
         if (!card) break;
         card.classList.add('rejected');
         updateStatus(`Paso ${stepNumber}: ${step.value} es mayor que el pivote, queda temporalmente a la derecha.`);
-        await waitForAnimation(0.7);
+        if (!(await waitForStep(0.7, runId))) return false;
         card.classList.remove('rejected');
         break;
       }
@@ -478,10 +694,10 @@ async function animateQuickSort(values) {
         pivotCard.classList.add('swapping');
         targetCard.classList.add('swapping');
         updateStatus(`Paso ${stepNumber}: Colocamos el pivote ${pivotValue} en su lugar definitivo.`);
-        await waitForAnimation(0.45);
+        if (!(await waitForStep(0.45, runId))) return false;
         swapState(from, to);
         setPivot(to);
-        await waitForAnimation(0.9);
+        if (!(await waitForStep(0.9, runId))) return false;
         pivotCard.classList.remove('swapping');
         targetCard.classList.remove('swapping');
         break;
@@ -490,25 +706,26 @@ async function animateQuickSort(values) {
         setPivot(step.index);
         markSorted(step.index);
         updateStatus(`Paso ${stepNumber}: El pivote ${step.pivotValue} queda fijo en la posición ${step.index + 1}.`);
-        await waitForAnimation(0.7);
+        if (!(await waitForStep(0.7, runId))) return false;
         break;
       case 'single':
         markSorted(step.index);
         updateStatus(`Paso ${stepNumber}: La posición ${step.index + 1} ya estaba ordenada.`);
-        await waitForAnimation(0.7);
+        if (!(await waitForStep(0.7, runId))) return false;
         break;
       case 'sorted-all':
         clearRangeHighlight();
         setPointer(null);
         setPivot(null);
         updateStatus('Finalizado: todos los elementos se han ordenado con QuickSort.');
-        await waitForAnimation();
+        if (!(await waitForStep(1, runId))) return false;
         break;
       default:
         break;
     }
-    stepNumber++;
   }
+
+  return runId === state.runId;
 }
 
 function getAnimationDuration(multiplier = 1) {
@@ -517,6 +734,11 @@ function getAnimationDuration(multiplier = 1) {
 
 function waitForAnimation(multiplier = 1) {
   return wait(getAnimationDuration(multiplier));
+}
+
+async function waitForStep(multiplier, runId) {
+  const completed = await waitForAnimation(multiplier);
+  return completed && runId === state.runId;
 }
 
 function wait(duration) {
@@ -538,14 +760,18 @@ function wait(duration) {
         startedAt = performance.now();
         timeoutId = setTimeout(finish, remaining);
       },
+      cancel() {
+        finish(false);
+      },
     };
 
-    function finish() {
+    function finish(completedNaturally = true) {
       if (completed) return;
       completed = true;
+      if (timeoutId !== null) clearTimeout(timeoutId);
       timeoutId = null;
       if (state.activeWait === timer) state.activeWait = null;
-      resolve();
+      resolve(completedNaturally);
     }
 
     state.activeWait = timer;
