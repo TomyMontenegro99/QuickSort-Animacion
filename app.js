@@ -14,6 +14,10 @@ const previousButton = document.getElementById('previousButton');
 const nextButton = document.getElementById('nextButton');
 const speedControl = document.getElementById('speedControl');
 const speedValue = document.getElementById('speedValue');
+const comparisonCount = document.getElementById('comparisonCount');
+const swapCount = document.getElementById('swapCount');
+const recursiveCallCount = document.getElementById('recursiveCallCount');
+const maxDepthCount = document.getElementById('maxDepthCount');
 
 const state = {
   numbers: Array.from({ length: INPUT_COUNT }, () => randomInt()),
@@ -40,6 +44,7 @@ function init() {
   createInputs();
   renderNumbers(state.numbers);
   attachEvents();
+  resetStatistics();
   updateStatus('Ingresa los 10 números para comenzar.');
 }
 
@@ -58,6 +63,7 @@ function attachEvents() {
     const initialValues = Array.from({ length: INPUT_COUNT }, () => 0);
     updateInputs(initialValues);
     renderNumbers(initialValues);
+    resetStatistics();
     updateStatus('Se reiniciaron los campos. Introduce nuevos valores.');
   });
 
@@ -66,6 +72,7 @@ function attachEvents() {
     const randomValues = Array.from({ length: INPUT_COUNT }, () => randomInt());
     updateInputs(randomValues);
     renderNumbers(randomValues);
+    resetStatistics();
     updateStatus('Se generó una lista de números aleatorios.');
   });
 }
@@ -97,6 +104,8 @@ function handleInputChange(index, event) {
     event.target.value = state.numbers[index];
     return;
   }
+
+  resetStatistics();
 
   const value = event.target.value;
   const numericValue = Number(value);
@@ -386,36 +395,69 @@ function updateStatus(message) {
   statusMessage.textContent = message;
 }
 
+function updateStatistics(statistics) {
+  comparisonCount.textContent = statistics.comparisons;
+  swapCount.textContent = statistics.swaps;
+  recursiveCallCount.textContent = statistics.recursiveCalls;
+  maxDepthCount.textContent = statistics.maxDepth;
+}
+
+function resetStatistics() {
+  updateStatistics({
+    comparisons: 0,
+    swaps: 0,
+    recursiveCalls: 0,
+    maxDepth: 0,
+  });
+}
+
 function buildQuickSortSteps(values) {
   const arr = values.slice();
   const steps = [];
+  const statistics = {
+    comparisons: 0,
+    swaps: 0,
+    recursiveCalls: 0,
+    maxDepth: 0,
+  };
 
-  function quickSort(left, right) {
+  function addStep(step) {
+    steps.push({
+      ...step,
+      statistics: { ...statistics },
+    });
+  }
+
+  function quickSort(left, right, depth = 1) {
+    statistics.recursiveCalls++;
+    statistics.maxDepth = Math.max(statistics.maxDepth, depth);
+
     if (left >= right) {
       if (left === right) {
-        steps.push({ type: 'range', left, right });
-        steps.push({ type: 'single', index: left });
-        steps.push({ type: 'range-clear', left, right });
+        addStep({ type: 'range', left, right });
+        addStep({ type: 'single', index: left });
+        addStep({ type: 'range-clear', left, right });
       }
       return;
     }
-    steps.push({ type: 'range', left, right });
+    addStep({ type: 'range', left, right });
     const pivotIndex = partition(left, right);
-    steps.push({ type: 'range-clear', left, right });
-    quickSort(left, pivotIndex - 1);
-    quickSort(pivotIndex + 1, right);
+    addStep({ type: 'range-clear', left, right });
+    quickSort(left, pivotIndex - 1, depth + 1);
+    quickSort(pivotIndex + 1, right, depth + 1);
   }
 
   function partition(left, right) {
     const pivotValue = arr[right];
-    steps.push({ type: 'pivot', index: right, pivotValue, left, right });
+    addStep({ type: 'pivot', index: right, pivotValue, left, right });
     let i = left;
-    steps.push({ type: 'pointer', index: i });
+    addStep({ type: 'pointer', index: i });
 
     for (let j = left; j < right; j++) {
       const currentValue = arr[j];
       const isLessOrEqual = currentValue <= pivotValue;
-      steps.push({
+      statistics.comparisons++;
+      addStep({
         type: 'compare',
         index: j,
         pivot: right,
@@ -425,7 +467,8 @@ function buildQuickSortSteps(values) {
         result: isLessOrEqual,
       });
       if (isLessOrEqual) {
-        steps.push({
+        if (i !== j) statistics.swaps++;
+        addStep({
           type: 'swap-or-accept',
           from: j,
           to: i,
@@ -437,25 +480,26 @@ function buildQuickSortSteps(values) {
           arr[j] = temp;
         }
         i++;
-        steps.push({ type: 'pointer', index: i });
+        addStep({ type: 'pointer', index: i });
       } else {
-        steps.push({
+        addStep({
           type: 'greater',
           index: j,
           value: currentValue,
         });
       }
     }
-    steps.push({ type: 'pivot-swap', from: right, to: i, pivotValue });
+    if (right !== i) statistics.swaps++;
+    addStep({ type: 'pivot-swap', from: right, to: i, pivotValue });
     const temp = arr[i];
     arr[i] = arr[right];
     arr[right] = temp;
-    steps.push({ type: 'pivot-placed', index: i, pivotValue });
+    addStep({ type: 'pivot-placed', index: i, pivotValue });
     return i;
   }
 
   quickSort(0, arr.length - 1);
-  steps.push({ type: 'sorted-all' });
+  addStep({ type: 'sorted-all' });
   return steps;
 }
 
@@ -542,6 +586,7 @@ function buildQuickSortFrames(values, steps) {
       sorted: [...model.sorted],
       highlights,
       status,
+      statistics: { ...step.statistics },
     };
   });
 }
@@ -582,6 +627,7 @@ function describeQuickSortStep(step, stepNumber, numbers) {
 function renderStepFrame(index) {
   if (index < 0) {
     renderNumbers(state.initialNumbers);
+    resetStatistics();
     updateStatus('Antes del primer paso: el arreglo conserva su orden original.');
     return;
   }
@@ -597,6 +643,7 @@ function renderStepFrame(index) {
   frame.highlights.forEach(({ index: cardIndex, className }) => {
     state.cards[cardIndex]?.classList.add(className);
   });
+  updateStatistics(frame.statistics);
   updateStatus(frame.status);
 }
 
@@ -610,6 +657,7 @@ async function animateQuickSort(startIndex = 0) {
     const stepNumber = index + 1;
     state.currentStepIndex = index;
     updateStepControls();
+    updateStatistics(step.statistics);
     switch (step.type) {
       case 'range':
         highlightRange(step.left, step.right);

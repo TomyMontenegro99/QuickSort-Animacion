@@ -76,6 +76,32 @@
         </button>
       </section>
 
+      <section class="statistics" aria-labelledby="statistics-title">
+        <h2 id="statistics-title">Estadísticas</h2>
+        <p class="statistics-description">
+          Los intercambios solo cuentan cuando dos posiciones distintas cambian de valor.
+          Las llamadas recursivas incluyen la llamada inicial a QuickSort.
+        </p>
+        <div class="statistics-grid" aria-live="polite">
+          <article class="statistic-card">
+            <span>Comparaciones</span>
+            <strong id="comparisonCount">0</strong>
+          </article>
+          <article class="statistic-card">
+            <span>Intercambios</span>
+            <strong id="swapCount">0</strong>
+          </article>
+          <article class="statistic-card">
+            <span>Llamadas recursivas</span>
+            <strong id="recursiveCallCount">0</strong>
+          </article>
+          <article class="statistic-card">
+            <span>Profundidad máxima</span>
+            <strong id="maxDepthCount">0</strong>
+          </article>
+        </div>
+      </section>
+
       <section class="status" aria-live="polite">
         <h2>Explicación</h2>
         <p id="statusMessage">Ingresa los 10 números para comenzar.</p>

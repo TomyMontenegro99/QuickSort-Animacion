@@ -49,6 +49,7 @@ body::before {
 
 .input-panel,
 .visual-panel,
+.statistics,
 .status {
   margin-top: 2.5rem;
 }
@@ -204,6 +205,56 @@ button.pause-button.is-paused {
 
 button.step-button {
   padding-inline: 1.25rem;
+}
+
+.statistics h2 {
+  margin-bottom: 0.35rem;
+}
+
+.statistics-description {
+  margin: 0 0 1rem;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.statistics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.statistic-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(99, 102, 241, 0.18);
+  border-radius: 14px;
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.statistic-card span {
+  color: #475569;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.statistic-card strong {
+  color: #4338ca;
+  font-size: 1.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 700px) {
+  .statistics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 420px) {
+  .statistics-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .visual-panel h2 {
