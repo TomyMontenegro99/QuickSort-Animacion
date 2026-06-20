@@ -9,6 +9,7 @@ const statusMessage = document.getElementById('statusMessage');
 const sortButton = document.getElementById('sortButton');
 const resetButton = document.getElementById('resetButton');
 const randomButton = document.getElementById('randomButton');
+const pauseButton = document.getElementById('pauseButton');
 const speedControl = document.getElementById('speedControl');
 const speedValue = document.getElementById('speedValue');
 
@@ -16,7 +17,11 @@ const state = {
   numbers: Array.from({ length: INPUT_COUNT }, () => randomInt()),
   cards: [],
   animationRunning: false,
+  animationPaused: false,
   animationSpeed: Number(speedControl.value),
+  activeWait: null,
+  runningAnimations: new Set(),
+  statusBeforePause: '',
   pivotIndex: null,
   pointerIndex: null,
 };
@@ -32,6 +37,7 @@ function init() {
 
 function attachEvents() {
   sortButton.addEventListener('click', handleSortClick);
+  pauseButton.addEventListener('click', handlePauseClick);
   speedControl.addEventListener('input', () => {
     state.animationSpeed = Number(speedControl.value);
     speedValue.value = `${state.animationSpeed}x`;
@@ -157,17 +163,55 @@ async function handleSortClick() {
     return;
   }
   state.animationRunning = true;
+  state.animationPaused = false;
+  resetPauseControl();
   toggleControls(true);
   renderNumbers(numbers);
-  await animateQuickSort(numbers);
-  toggleControls(false);
-  state.animationRunning = false;
+  try {
+    await animateQuickSort(numbers);
+  } finally {
+    state.animationRunning = false;
+    state.animationPaused = false;
+    state.activeWait = null;
+    numberDisplay.classList.remove('paused');
+    resetPauseControl();
+    toggleControls(false);
+  }
+}
+
+function handlePauseClick() {
+  if (!state.animationRunning) return;
+
+  state.animationPaused = !state.animationPaused;
+  numberDisplay.classList.toggle('paused', state.animationPaused);
+  pauseButton.classList.toggle('is-paused', state.animationPaused);
+  pauseButton.setAttribute('aria-pressed', String(state.animationPaused));
+
+  if (state.animationPaused) {
+    state.statusBeforePause = statusMessage.textContent;
+    state.activeWait?.pause();
+    state.runningAnimations.forEach((animation) => animation.pause());
+    pauseButton.textContent = 'Reanudar';
+    statusMessage.textContent = 'Animación pausada. Presiona “Reanudar” para continuar.';
+  } else {
+    state.runningAnimations.forEach((animation) => animation.play());
+    state.activeWait?.resume();
+    pauseButton.textContent = 'Pausar';
+    statusMessage.textContent = state.statusBeforePause;
+  }
+}
+
+function resetPauseControl() {
+  pauseButton.textContent = 'Pausar';
+  pauseButton.classList.remove('is-paused');
+  pauseButton.setAttribute('aria-pressed', 'false');
 }
 
 function toggleControls(disabled) {
   sortButton.disabled = disabled;
   resetButton.disabled = disabled;
   randomButton.disabled = disabled;
+  pauseButton.disabled = !disabled;
   const inputs = inputsContainer.querySelectorAll('input');
   inputs.forEach((input) => {
     input.disabled = disabled;
@@ -228,7 +272,7 @@ function animateFromPositions(beforePositions) {
     const deltaX = rect.left - after.left;
     const deltaY = rect.top - after.top;
     if (Math.abs(deltaX) > 1 || Math.abs(deltaY) > 1) {
-      card.animate(
+      const animation = card.animate(
         [
           { transform: `translate(${deltaX}px, ${deltaY}px)` },
           { transform: 'translate(0, 0)' },
@@ -238,6 +282,12 @@ function animateFromPositions(beforePositions) {
           easing: 'cubic-bezier(0.22, 0.61, 0.36, 1)',
         }
       );
+      state.runningAnimations.add(animation);
+      if (state.animationPaused) animation.pause();
+
+      const removeAnimation = () => state.runningAnimations.delete(animation);
+      animation.addEventListener('finish', removeAnimation, { once: true });
+      animation.addEventListener('cancel', removeAnimation, { once: true });
     }
   });
 }
@@ -470,5 +520,35 @@ function waitForAnimation(multiplier = 1) {
 }
 
 function wait(duration) {
-  return new Promise((resolve) => setTimeout(resolve, duration));
+  return new Promise((resolve) => {
+    let remaining = duration;
+    let startedAt = 0;
+    let timeoutId = null;
+    let completed = false;
+
+    const timer = {
+      pause() {
+        if (completed || timeoutId === null) return;
+        clearTimeout(timeoutId);
+        timeoutId = null;
+        remaining = Math.max(0, remaining - (performance.now() - startedAt));
+      },
+      resume() {
+        if (completed || timeoutId !== null) return;
+        startedAt = performance.now();
+        timeoutId = setTimeout(finish, remaining);
+      },
+    };
+
+    function finish() {
+      if (completed) return;
+      completed = true;
+      timeoutId = null;
+      if (state.activeWait === timer) state.activeWait = null;
+      resolve();
+    }
+
+    state.activeWait = timer;
+    if (!state.animationPaused) timer.resume();
+  });
 }

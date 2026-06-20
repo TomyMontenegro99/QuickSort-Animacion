@@ -197,6 +197,11 @@ button.ghost:hover:not(:disabled) {
   box-shadow: 0 16px 24px rgba(59, 130, 246, 0.22);
 }
 
+button.pause-button.is-paused {
+  background: rgba(16, 185, 129, 0.16);
+  color: #047857;
+}
+
 .visual-panel h2 {
   margin-bottom: 1.25rem;
 }
@@ -266,6 +271,10 @@ button.ghost:hover:not(:disabled) {
 
 .number-card.updated {
   animation: pulse 0.7s ease;
+}
+
+.number-display.paused .number-card {
+  animation-play-state: paused;
 }
 
 .number-card.pivot {

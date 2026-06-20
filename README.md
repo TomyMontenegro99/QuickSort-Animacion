@@ -10,6 +10,7 @@ seguir paso a paso el algoritmo de QuickSort mediante animaciones.
 - Animaciones que muestran pivote, comparaciones, intercambios y elementos
   ordenados.
 - Control de velocidad ajustable entre 0.5x y 2x.
+- Pausa y reanudación de la animación en cualquier paso.
 - Explicaciones en español de cada paso del algoritmo.
 
 ## Ejecución
