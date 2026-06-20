@@ -9,6 +9,7 @@ seguir paso a paso el algoritmo de QuickSort mediante animaciones.
 - Botón para generar valores aleatorios y opción de reinicio.
 - Animaciones que muestran pivote, comparaciones, intercambios y elementos
   ordenados.
+- Control de velocidad ajustable entre 0.5x y 2x.
 - Explicaciones en español de cada paso del algoritmo.
 
 ## Ejecución

@@ -9,11 +9,14 @@ const statusMessage = document.getElementById('statusMessage');
 const sortButton = document.getElementById('sortButton');
 const resetButton = document.getElementById('resetButton');
 const randomButton = document.getElementById('randomButton');
+const speedControl = document.getElementById('speedControl');
+const speedValue = document.getElementById('speedValue');
 
 const state = {
   numbers: Array.from({ length: INPUT_COUNT }, () => randomInt()),
   cards: [],
   animationRunning: false,
+  animationSpeed: Number(speedControl.value),
   pivotIndex: null,
   pointerIndex: null,
 };
@@ -29,6 +32,11 @@ function init() {
 
 function attachEvents() {
   sortButton.addEventListener('click', handleSortClick);
+  speedControl.addEventListener('input', () => {
+    state.animationSpeed = Number(speedControl.value);
+    speedValue.value = `${state.animationSpeed}x`;
+  });
+
   resetButton.addEventListener('click', () => {
     if (state.animationRunning) return;
     const initialValues = Array.from({ length: INPUT_COUNT }, () => 0);
@@ -226,7 +234,7 @@ function animateFromPositions(beforePositions) {
           { transform: 'translate(0, 0)' },
         ],
         {
-          duration: ANIMATION_BASE_DELAY,
+          duration: getAnimationDuration(),
           easing: 'cubic-bezier(0.22, 0.61, 0.36, 1)',
         }
       );
@@ -340,7 +348,7 @@ async function animateQuickSort(values) {
       case 'range':
         highlightRange(step.left, step.right);
         updateStatus(`Paso ${stepNumber}: Trabajando en el segmento entre las posiciones ${step.left + 1} y ${step.right + 1}.`);
-        await wait(ANIMATION_BASE_DELAY * 0.8);
+        await waitForAnimation(0.8);
         break;
       case 'range-clear':
         clearRangeHighlight();
@@ -349,13 +357,13 @@ async function animateQuickSort(values) {
             `Paso ${stepNumber}: Finaliza el análisis del segmento ${step.left + 1} - ${step.right + 1}.`
           );
         }
-        await wait(ANIMATION_BASE_DELAY * 0.4);
+        await waitForAnimation(0.4);
         break;
       case 'pivot':
         setPivot(step.index);
         highlightRange(step.left, step.right);
         updateStatus(`Paso ${stepNumber}: Se elige el pivote ${step.pivotValue} en la posición ${step.index + 1}.`);
-        await wait(ANIMATION_BASE_DELAY * 0.9);
+        await waitForAnimation(0.9);
         break;
       case 'pointer': {
         const pointerIndex = step.index < state.cards.length ? step.index : null;
@@ -365,7 +373,7 @@ async function animateQuickSort(values) {
             ? `Paso ${stepNumber}: El puntero i queda fuera del rango preparado para colocar el pivote.`
             : `Paso ${stepNumber}: El puntero i delimita ahora la posición ${pointerIndex + 1}.`
         );
-        await wait(ANIMATION_BASE_DELAY * 0.35);
+        await waitForAnimation(0.35);
         break;
       }
       case 'compare': {
@@ -377,7 +385,7 @@ async function animateQuickSort(values) {
         updateStatus(
           `Paso ${stepNumber}: Comparando ${step.value} con el pivote ${step.pivotValue}. ${step.result ? 'Es menor o igual, se mueve a la izquierda.' : 'Permanece a la derecha.'}`
         );
-        await wait(ANIMATION_BASE_DELAY);
+        await waitForAnimation();
         card.classList.remove('comparing');
         break;
       }
@@ -389,15 +397,15 @@ async function animateQuickSort(values) {
         if (from === to) {
           fromCard.classList.add('accepted');
           updateStatus(`Paso ${stepNumber}: ${step.value} ya está del lado correcto, solo se avanza el límite.`);
-          await wait(ANIMATION_BASE_DELAY * 0.8);
+          await waitForAnimation(0.8);
           fromCard.classList.remove('accepted');
         } else {
           fromCard.classList.add('swapping');
           toCard.classList.add('swapping');
           updateStatus(`Paso ${stepNumber}: Intercambiamos ${state.numbers[from]} con ${state.numbers[to]} para llevarlo al sub-arreglo izquierdo.`);
-          await wait(ANIMATION_BASE_DELAY * 0.45);
+          await waitForAnimation(0.45);
           swapState(from, to);
-          await wait(ANIMATION_BASE_DELAY * 0.9);
+          await waitForAnimation(0.9);
           fromCard.classList.remove('swapping');
           toCard.classList.remove('swapping');
         }
@@ -408,7 +416,7 @@ async function animateQuickSort(values) {
         if (!card) break;
         card.classList.add('rejected');
         updateStatus(`Paso ${stepNumber}: ${step.value} es mayor que el pivote, queda temporalmente a la derecha.`);
-        await wait(ANIMATION_BASE_DELAY * 0.7);
+        await waitForAnimation(0.7);
         card.classList.remove('rejected');
         break;
       }
@@ -420,10 +428,10 @@ async function animateQuickSort(values) {
         pivotCard.classList.add('swapping');
         targetCard.classList.add('swapping');
         updateStatus(`Paso ${stepNumber}: Colocamos el pivote ${pivotValue} en su lugar definitivo.`);
-        await wait(ANIMATION_BASE_DELAY * 0.45);
+        await waitForAnimation(0.45);
         swapState(from, to);
         setPivot(to);
-        await wait(ANIMATION_BASE_DELAY * 0.9);
+        await waitForAnimation(0.9);
         pivotCard.classList.remove('swapping');
         targetCard.classList.remove('swapping');
         break;
@@ -432,25 +440,33 @@ async function animateQuickSort(values) {
         setPivot(step.index);
         markSorted(step.index);
         updateStatus(`Paso ${stepNumber}: El pivote ${step.pivotValue} queda fijo en la posición ${step.index + 1}.`);
-        await wait(ANIMATION_BASE_DELAY * 0.7);
+        await waitForAnimation(0.7);
         break;
       case 'single':
         markSorted(step.index);
         updateStatus(`Paso ${stepNumber}: La posición ${step.index + 1} ya estaba ordenada.`);
-        await wait(ANIMATION_BASE_DELAY * 0.7);
+        await waitForAnimation(0.7);
         break;
       case 'sorted-all':
         clearRangeHighlight();
         setPointer(null);
         setPivot(null);
         updateStatus('Finalizado: todos los elementos se han ordenado con QuickSort.');
-        await wait(ANIMATION_BASE_DELAY);
+        await waitForAnimation();
         break;
       default:
         break;
     }
     stepNumber++;
   }
+}
+
+function getAnimationDuration(multiplier = 1) {
+  return (ANIMATION_BASE_DELAY * multiplier) / state.animationSpeed;
+}
+
+function waitForAnimation(multiplier = 1) {
+  return wait(getAnimationDuration(multiplier));
 }
 
 function wait(duration) {

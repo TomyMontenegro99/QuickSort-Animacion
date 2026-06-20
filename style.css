@@ -127,10 +127,35 @@ body::before {
 
 .controls {
   display: flex;
+  align-items: center;
   gap: 1rem;
   flex-wrap: wrap;
   justify-content: flex-end;
   margin-top: 2.5rem;
+}
+
+.speed-control {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-right: auto;
+  padding: 0.65rem 1rem;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.08);
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.speed-control input {
+  width: clamp(100px, 16vw, 170px);
+  accent-color: #4f46e5;
+  cursor: pointer;
+}
+
+.speed-control output {
+  min-width: 2.2rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 button {
