@@ -26,6 +26,10 @@ const numberCountInput = document.getElementById('numberCount');
 const applyCountButton = document.getElementById('applyCountButton');
 const recursionTreeContainer = document.getElementById('recursionTree');
 const stepHistoryContainer = document.getElementById('stepHistory');
+const progressLabel = document.getElementById('progressLabel');
+const progressPercentage = document.getElementById('progressPercentage');
+const progressTrack = document.getElementById('progressTrack');
+const progressFill = document.getElementById('progressFill');
 
 const state = {
   inputCount: DEFAULT_INPUT_COUNT,
@@ -258,6 +262,7 @@ function handleSortClick() {
   state.recursionTree = execution.recursionTree;
   state.stepFrames = buildQuickSortFrames(numbers, state.steps);
   renderStepHistory();
+  updateProgress(-1);
   state.currentStepIndex = -1;
   resetPauseControl();
   toggleControls(true);
@@ -578,6 +583,37 @@ function clearStepHistory() {
   placeholder.className = 'history-placeholder';
   placeholder.textContent = 'Inicia la animación para registrar operaciones.';
   stepHistoryContainer.appendChild(placeholder);
+  resetProgress();
+}
+
+function resetProgress() {
+  progressLabel.textContent = 'Sin iniciar';
+  progressPercentage.textContent = '0%';
+  progressFill.style.width = '0%';
+  progressTrack.setAttribute('aria-valuenow', '0');
+  progressTrack.setAttribute('aria-valuetext', 'Animación sin iniciar');
+  progressTrack.classList.remove('complete');
+}
+
+function updateProgress(stepIndex) {
+  const totalSteps = state.steps.length;
+  const currentStep =
+    totalSteps === 0 ? 0 : Math.min(totalSteps, Math.max(0, stepIndex + 1));
+  const percentage =
+    totalSteps === 0 ? 0 : Math.round((currentStep / totalSteps) * 100);
+
+  progressLabel.textContent =
+    totalSteps === 0 ? 'Sin iniciar' : `Paso ${currentStep} de ${totalSteps}`;
+  progressPercentage.textContent = `${percentage}%`;
+  progressFill.style.width = `${percentage}%`;
+  progressTrack.setAttribute('aria-valuenow', String(percentage));
+  progressTrack.setAttribute(
+    'aria-valuetext',
+    totalSteps === 0
+      ? 'Animación sin iniciar'
+      : `Paso ${currentStep} de ${totalSteps}, ${percentage}% completado`
+  );
+  progressTrack.classList.toggle('complete', percentage === 100);
 }
 
 function renderStepHistory() {
@@ -657,6 +693,7 @@ function renderStepFrame(index) {
     resetStatistics();
     updateRecursionTree(-1);
     updateStepHistory(-1);
+    updateProgress(-1);
     updateStatus('Antes del primer paso: el arreglo conserva su orden original.');
     return;
   }
@@ -675,6 +712,7 @@ function renderStepFrame(index) {
   updateStatistics(frame.statistics);
   updateRecursionTree(index);
   updateStepHistory(index);
+  updateProgress(index);
   updateStatus(frame.status);
 }
 
@@ -691,6 +729,7 @@ async function animateQuickSort(startIndex = 0) {
     updateStatistics(step.statistics);
     updateRecursionTree(index);
     updateStepHistory(index);
+    updateProgress(index);
     switch (step.type) {
       case 'range':
         highlightRange(step.left, step.right);

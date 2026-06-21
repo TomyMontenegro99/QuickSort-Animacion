@@ -103,6 +103,23 @@
         <button id="sortButton" type="button" class="primary">
           Ordenar con QuickSort
         </button>
+        <div class="animation-progress">
+          <div class="progress-meta">
+            <span id="progressLabel">Sin iniciar</span>
+            <strong id="progressPercentage">0%</strong>
+          </div>
+          <div
+            id="progressTrack"
+            class="progress-track"
+            role="progressbar"
+            aria-labelledby="progressLabel"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+          >
+            <div id="progressFill" class="progress-fill"></div>
+          </div>
+        </div>
       </section>
 
       <section class="statistics" aria-labelledby="statistics-title">

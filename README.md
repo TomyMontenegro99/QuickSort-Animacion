@@ -17,6 +17,7 @@ seguir paso a paso el algoritmo de QuickSort mediante animaciones.
 - Árbol de recursión sincronizado con el subarreglo activo y la navegación de pasos.
 - Historial navegable de las operaciones alcanzadas durante la ejecución.
 - Modo oscuro con detección del sistema y preferencia persistente.
+- Barra de progreso sincronizada con la animación y la navegación de pasos.
 - Explicaciones en español de cada paso del algoritmo.
 
 ## Ejecución
