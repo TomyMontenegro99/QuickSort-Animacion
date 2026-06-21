@@ -9,7 +9,18 @@
   <body>
     <main class="app">
       <header class="hero">
-        <h1>Animación del algoritmo QuickSort</h1>
+        <div class="hero-heading">
+          <h1>Animación del algoritmo QuickSort</h1>
+          <button
+            id="themeToggle"
+            type="button"
+            class="ghost theme-toggle"
+            aria-pressed="false"
+          >
+            <span id="themeIcon" aria-hidden="true">☾</span>
+            <span id="themeLabel">Modo oscuro</span>
+          </button>
+        </div>
         <p>
           Elige cuántos números enteros quieres ordenar, observa cómo se almacenan y
           presiona <strong>“Ordenar con QuickSort”</strong> para seguir el proceso
@@ -143,6 +154,7 @@
       </p>
     </footer>
 
+    <script src="theme.js"></script>
     <script src="app.js" type="module"></script>
   </body>
 </html>

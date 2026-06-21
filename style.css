@@ -1,5 +1,5 @@
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
   font-family: "Montserrat", "Segoe UI", sans-serif;
   background: radial-gradient(circle at top, #e8f0ff 0%, #fefefe 40%, #d2e0ff 100%);
   min-height: 100%;
@@ -35,16 +35,37 @@ body::before {
   backdrop-filter: blur(6px);
 }
 
+.hero-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 .hero h1 {
-  margin: 0 0 0.75rem;
+  margin: 0;
   font-size: clamp(2.2rem, 4vw, 3rem);
   color: #1d4ed8;
 }
 
 .hero p {
-  margin: 0;
+  margin: 0.75rem 0 0;
   font-size: 1.05rem;
   line-height: 1.6;
+}
+
+.theme-toggle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-inline: 1.1rem;
+  white-space: nowrap;
+}
+
+.theme-toggle span[aria-hidden="true"] {
+  font-size: 1.2rem;
+  line-height: 1;
 }
 
 .input-panel,
@@ -661,6 +682,156 @@ button.step-button {
   line-height: 1.6;
 }
 
+html[data-theme="dark"] {
+  color-scheme: dark;
+  background: radial-gradient(circle at top, #172554 0%, #0f172a 42%, #020617 100%);
+  scrollbar-color: #475569 #0f172a;
+}
+
+html[data-theme="dark"] body {
+  color: #e2e8f0;
+}
+
+html[data-theme="dark"] body::before {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(14, 165, 233, 0.08));
+}
+
+html[data-theme="dark"] .app {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  box-shadow: 0 25px 55px rgba(0, 0, 0, 0.45);
+}
+
+html[data-theme="dark"] .hero h1 {
+  color: #93c5fd;
+}
+
+html[data-theme="dark"] .panel-description,
+html[data-theme="dark"] .statistics-description,
+html[data-theme="dark"] .recursion-description,
+html[data-theme="dark"] .history-description,
+html[data-theme="dark"] .legend,
+html[data-theme="dark"] .footer,
+html[data-theme="dark"] .tree-placeholder,
+html[data-theme="dark"] .history-placeholder,
+html[data-theme="dark"] .statistic-card span {
+  color: #94a3b8;
+}
+
+html[data-theme="dark"] .count-control,
+html[data-theme="dark"] .input-wrapper,
+html[data-theme="dark"] .speed-control,
+html[data-theme="dark"] .statistic-card {
+  border-color: rgba(129, 140, 248, 0.28);
+  background: rgba(30, 41, 59, 0.78);
+}
+
+html[data-theme="dark"] .count-control,
+html[data-theme="dark"] .input-wrapper span,
+html[data-theme="dark"] .speed-control,
+html[data-theme="dark"] .statistic-card strong,
+html[data-theme="dark"] .history-step-number {
+  color: #c7d2fe;
+}
+
+html[data-theme="dark"] .count-control input,
+html[data-theme="dark"] .input-wrapper input {
+  border-color: #475569;
+  background: #0f172a;
+  color: #f8fafc;
+}
+
+html[data-theme="dark"] .input-wrapper.invalid {
+  border-color: #fb7185;
+  box-shadow: 0 0 0 3px rgba(251, 113, 133, 0.2);
+}
+
+html[data-theme="dark"] button.ghost {
+  background: rgba(96, 165, 250, 0.16);
+  color: #bfdbfe;
+  box-shadow: 0 12px 20px rgba(2, 6, 23, 0.35);
+}
+
+html[data-theme="dark"] button.pause-button.is-paused {
+  background: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+}
+
+html[data-theme="dark"] .recursion-tree,
+html[data-theme="dark"] .step-history,
+html[data-theme="dark"] .number-display {
+  border-color: rgba(129, 140, 248, 0.35);
+  background: rgba(2, 6, 23, 0.42);
+}
+
+html[data-theme="dark"] .recursion-tree li::before {
+  background: rgba(129, 140, 248, 0.45);
+}
+
+html[data-theme="dark"] .tree-node {
+  border-color: #475569;
+  background: #1e293b;
+  color: #f1f5f9;
+}
+
+html[data-theme="dark"] .tree-node span {
+  color: #94a3b8;
+}
+
+html[data-theme="dark"] .tree-node small {
+  color: #c4b5fd;
+}
+
+html[data-theme="dark"] .tree-node.visited {
+  border-color: rgba(96, 165, 250, 0.65);
+}
+
+html[data-theme="dark"] .tree-node.active {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.22);
+}
+
+html[data-theme="dark"] .tree-node.complete {
+  border-color: rgba(52, 211, 153, 0.7);
+  background: rgba(16, 185, 129, 0.14);
+}
+
+html[data-theme="dark"] .history-button {
+  background: rgba(30, 41, 59, 0.75);
+  color: #94a3b8;
+}
+
+html[data-theme="dark"] .history-button.visited {
+  background: rgba(59, 130, 246, 0.13);
+  color: #e2e8f0;
+}
+
+html[data-theme="dark"] .history-button.current {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.16);
+  color: #fde68a;
+}
+
+html[data-theme="dark"] .number-card:not(.pivot):not(.accepted):not(.rejected):not(.sorted) {
+  background: #1e293b;
+  color: #f8fafc;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.38);
+}
+
+html[data-theme="dark"] .number-card.pivot {
+  color: #1f2937;
+}
+
+html[data-theme="dark"] .legend .sample {
+  border-color: rgba(203, 213, 225, 0.3);
+}
+
+body,
+.app {
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
 @keyframes pulse {
   0% {
     transform: scale(1);
@@ -697,6 +868,11 @@ button.step-button {
 
   .controls {
     justify-content: center;
+  }
+
+  .hero-heading {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 
