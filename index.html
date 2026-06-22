@@ -104,24 +104,54 @@
           />
           <output id="speedValue" for="speedControl">1x</output>
         </div>
-        <button id="resetButton" type="button" class="ghost">Restablecer</button>
+        <button id="resetButton" type="button" class="ghost button-with-icon">
+          <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20 11a8 8 0 1 0-2.34 5.66M20 4v7h-7" />
+          </svg>
+          <span>Restablecer</span>
+        </button>
         <button
           id="pauseButton"
           type="button"
-          class="ghost pause-button"
+          class="ghost pause-button button-with-icon"
           aria-pressed="false"
           disabled
         >
-          Pausar
+          <svg class="button-icon pause-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8 5v14M16 5v14" />
+          </svg>
+          <svg class="button-icon resume-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path class="filled-icon" d="M8 5v14l11-7z" />
+          </svg>
+          <span id="pauseButtonLabel">Pausar</span>
         </button>
-        <button id="previousButton" type="button" class="ghost step-button" disabled>
-          Anterior
+        <button
+          id="previousButton"
+          type="button"
+          class="ghost step-button button-with-icon"
+          disabled
+        >
+          <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m15 18-6-6 6-6" />
+          </svg>
+          <span>Anterior</span>
         </button>
-        <button id="nextButton" type="button" class="ghost step-button" disabled>
-          Siguiente
+        <button
+          id="nextButton"
+          type="button"
+          class="ghost step-button button-with-icon"
+          disabled
+        >
+          <span>Siguiente</span>
+          <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m9 18 6-6-6-6" />
+          </svg>
         </button>
-        <button id="sortButton" type="button" class="primary">
-          Ordenar con QuickSort
+        <button id="sortButton" type="button" class="primary button-with-icon">
+          <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path class="filled-icon" d="M8 5v14l11-7z" />
+          </svg>
+          <span>Ordenar con QuickSort</span>
         </button>
         <div class="animation-progress">
           <div class="progress-meta">

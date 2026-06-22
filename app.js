@@ -14,6 +14,7 @@ const sortButton = document.getElementById('sortButton');
 const resetButton = document.getElementById('resetButton');
 const randomButton = document.getElementById('randomButton');
 const pauseButton = document.getElementById('pauseButton');
+const pauseButtonLabel = document.getElementById('pauseButtonLabel');
 const previousButton = document.getElementById('previousButton');
 const nextButton = document.getElementById('nextButton');
 const speedControl = document.getElementById('speedControl');
@@ -318,10 +319,10 @@ function handlePauseClick() {
     state.statusBeforePause = statusMessage.textContent;
     state.activeWait?.pause();
     state.runningAnimations.forEach((animation) => animation.pause());
-    pauseButton.textContent = 'Reanudar';
+    pauseButtonLabel.textContent = 'Reanudar';
     statusMessage.textContent = 'Animación pausada. Presiona “Reanudar” para continuar.';
   } else {
-    pauseButton.textContent = 'Pausar';
+    pauseButtonLabel.textContent = 'Pausar';
     if (state.manualNavigation) {
       state.manualNavigation = false;
       void startAutomaticAnimation(state.currentStepIndex + 1);
@@ -378,7 +379,7 @@ function finishAnimationSession() {
 }
 
 function resetPauseControl() {
-  pauseButton.textContent = 'Pausar';
+  pauseButtonLabel.textContent = 'Pausar';
   pauseButton.classList.remove('is-paused');
   pauseButton.setAttribute('aria-pressed', 'false');
 }

@@ -20,6 +20,7 @@ seguir paso a paso el algoritmo de QuickSort mediante animaciones.
 - Barra de progreso sincronizada con la animación y la navegación de pasos.
 - Secciones organizadas en paneles tipo tarjeta adaptados a ambos temas.
 - Selector entre visualización con tarjetas numéricas y barras verticales.
+- Controles principales acompañados por iconos SVG accesibles.
 - Explicaciones en español de cada paso del algoritmo.
 
 ## Ejecución

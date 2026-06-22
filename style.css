@@ -306,6 +306,47 @@ button {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+.button-with-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.button-icon {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.2s ease;
+}
+
+.button-icon .filled-icon,
+.button-icon.filled-icon {
+  fill: currentColor;
+  stroke: none;
+}
+
+.pause-button .resume-icon {
+  display: none;
+}
+
+.pause-button.is-paused .pause-icon {
+  display: none;
+}
+
+.pause-button.is-paused .resume-icon {
+  display: block;
+}
+
+#resetButton:hover:not(:disabled) .button-icon {
+  transform: rotate(-35deg);
+}
+
 button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -1086,6 +1127,10 @@ body,
   }
 
   .number-display.bar-view .number-card {
+    transition: none;
+  }
+
+  .button-icon {
     transition: none;
   }
 }
