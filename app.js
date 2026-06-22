@@ -30,6 +30,8 @@ const progressLabel = document.getElementById('progressLabel');
 const progressPercentage = document.getElementById('progressPercentage');
 const progressTrack = document.getElementById('progressTrack');
 const progressFill = document.getElementById('progressFill');
+const cardViewButton = document.getElementById('cardViewButton');
+const barViewButton = document.getElementById('barViewButton');
 
 const state = {
   inputCount: DEFAULT_INPUT_COUNT,
@@ -53,6 +55,7 @@ const state = {
   maxReachedStepIndex: -1,
   pivotIndex: null,
   pointerIndex: null,
+  visualMode: 'cards',
 };
 
 init();
@@ -68,6 +71,8 @@ function init() {
 }
 
 function attachEvents() {
+  cardViewButton.addEventListener('click', () => setVisualMode('cards'));
+  barViewButton.addEventListener('click', () => setVisualMode('bars'));
   sortButton.addEventListener('click', handleSortClick);
   pauseButton.addEventListener('click', handlePauseClick);
   previousButton.addEventListener('click', () => navigateStep(-1));
@@ -105,6 +110,17 @@ function attachEvents() {
     clearStepHistory();
     updateStatus('Se generó una lista de números aleatorios.');
   });
+}
+
+function setVisualMode(mode) {
+  state.visualMode = mode === 'bars' ? 'bars' : 'cards';
+  const barsEnabled = state.visualMode === 'bars';
+
+  numberDisplay.classList.toggle('bar-view', barsEnabled);
+  cardViewButton.classList.toggle('active', !barsEnabled);
+  barViewButton.classList.toggle('active', barsEnabled);
+  cardViewButton.setAttribute('aria-pressed', String(!barsEnabled));
+  barViewButton.setAttribute('aria-pressed', String(barsEnabled));
 }
 
 function applyInputCount() {
@@ -206,11 +222,17 @@ function renderNumbers(values, highlightIndex = null) {
   state.numbers = values.slice();
   clearHighlights();
   numberDisplay.innerHTML = '';
+  const minimum = Math.min(...values);
+  const maximum = Math.max(...values);
+  const range = maximum - minimum;
+
   state.cards = values.map((value, idx) => {
     const card = document.createElement('div');
     card.className = 'number-card';
     card.dataset.index = idx + 1;
     card.textContent = value;
+    const normalizedValue = range === 0 ? 0.5 : (value - minimum) / range;
+    card.style.setProperty('--bar-height', `${18 + normalizedValue * 62}%`);
     numberDisplay.appendChild(card);
     return card;
   });

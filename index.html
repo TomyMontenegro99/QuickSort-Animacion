@@ -50,7 +50,27 @@
       </section>
 
       <section class="visual-panel panel-card" aria-labelledby="visual-title">
-        <h2 id="visual-title">Visualización del arreglo</h2>
+        <div class="panel-header visual-header">
+          <h2 id="visual-title">Visualización del arreglo</h2>
+          <div class="view-toggle" role="group" aria-label="Tipo de visualización">
+            <button
+              id="cardViewButton"
+              type="button"
+              class="view-button active"
+              aria-pressed="true"
+            >
+              Tarjetas
+            </button>
+            <button
+              id="barViewButton"
+              type="button"
+              class="view-button"
+              aria-pressed="false"
+            >
+              Barras
+            </button>
+          </div>
+        </div>
         <div id="numberDisplay" class="number-display" aria-live="polite"></div>
         <div class="legend">
           <span><span class="sample pivot"></span> Pivote</span>

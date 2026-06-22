@@ -19,6 +19,7 @@ seguir paso a paso el algoritmo de QuickSort mediante animaciones.
 - Modo oscuro con detección del sistema y preferencia persistente.
 - Barra de progreso sincronizada con la animación y la navegación de pasos.
 - Secciones organizadas en paneles tipo tarjeta adaptados a ambos temas.
+- Selector entre visualización con tarjetas numéricas y barras verticales.
 - Explicaciones en español de cada paso del algoritmo.
 
 ## Ejecución

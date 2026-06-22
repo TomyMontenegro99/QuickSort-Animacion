@@ -395,7 +395,40 @@ button.step-button {
 }
 
 .visual-panel h2 {
+  margin: 0;
+}
+
+.visual-header {
   margin-bottom: 1.25rem;
+}
+
+.view-toggle {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.07);
+}
+
+button.view-button {
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  background: transparent;
+  color: #475569;
+  box-shadow: none;
+  font-size: 0.9rem;
+}
+
+button.view-button:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+button.view-button.active {
+  background: white;
+  color: #4338ca;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.18);
 }
 
 .recursion-panel h2 {
@@ -634,6 +667,36 @@ button.step-button {
   transition: filter 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+.number-display.bar-view {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 0.8rem;
+  height: 340px;
+  min-height: 340px;
+  padding: 2.5rem 1.25rem 1.5rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.number-display.bar-view .number-card {
+  flex: 0 0 clamp(48px, 6vw, 70px);
+  align-self: flex-end;
+  width: clamp(48px, 6vw, 70px);
+  height: var(--bar-height);
+  min-height: 58px;
+  margin: 0;
+  border-radius: 12px 12px 6px 6px;
+  transition: height 0.3s ease, filter 0.2s ease, transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.number-display.bar-view
+  .number-card:not(.pivot):not(.accepted):not(.rejected):not(.sorted) {
+  background: linear-gradient(180deg, #60a5fa, #2563eb);
+  color: white;
+}
+
 .number-card::before {
   content: attr(data-index);
   position: absolute;
@@ -797,6 +860,21 @@ html[data-theme="dark"] .hero h1 {
   color: #93c5fd;
 }
 
+html[data-theme="dark"] .view-toggle {
+  border-color: rgba(129, 140, 248, 0.3);
+  background: rgba(15, 23, 42, 0.55);
+}
+
+html[data-theme="dark"] button.view-button {
+  color: #94a3b8;
+}
+
+html[data-theme="dark"] button.view-button.active {
+  background: #334155;
+  color: #e0e7ff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
 html[data-theme="dark"] .panel-description,
 html[data-theme="dark"] .statistics-description,
 html[data-theme="dark"] .recursion-description,
@@ -923,6 +1001,12 @@ html[data-theme="dark"] .number-card:not(.pivot):not(.accepted):not(.rejected):n
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.38);
 }
 
+html[data-theme="dark"] .number-display.bar-view
+  .number-card:not(.pivot):not(.accepted):not(.rejected):not(.sorted) {
+  background: linear-gradient(180deg, #3b82f6, #1d4ed8);
+  color: white;
+}
+
 html[data-theme="dark"] .number-card.pivot {
   color: #1f2937;
 }
@@ -999,6 +1083,10 @@ body,
 
   .progress-fill::after {
     animation: none;
+  }
+
+  .number-display.bar-view .number-card {
+    transition: none;
   }
 }
 
