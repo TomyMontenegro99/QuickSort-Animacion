@@ -476,14 +476,28 @@ function animateFromPositions(beforePositions) {
     const deltaX = rect.left - after.left;
     const deltaY = rect.top - after.top;
     if (Math.abs(deltaX) > 1 || Math.abs(deltaY) > 1) {
+      const arcHeight = Math.min(42, Math.max(18, Math.abs(deltaX) * 0.18));
       const animation = card.animate(
         [
-          { transform: `translate(${deltaX}px, ${deltaY}px)` },
-          { transform: 'translate(0, 0)' },
+          {
+            offset: 0,
+            transform: `translate(${deltaX}px, ${deltaY}px) scale(1.08)`,
+            filter: 'brightness(1.08)',
+          },
+          {
+            offset: 0.55,
+            transform: `translate(${deltaX * 0.45}px, ${deltaY - arcHeight}px) scale(1.12) rotate(${deltaX > 0 ? -3 : 3}deg)`,
+            filter: 'brightness(1.14)',
+          },
+          {
+            offset: 1,
+            transform: 'translate(0, 0) scale(1) rotate(0deg)',
+            filter: 'brightness(1)',
+          },
         ],
         {
-          duration: getAnimationDuration(),
-          easing: 'cubic-bezier(0.22, 0.61, 0.36, 1)',
+          duration: getAnimationDuration(1.05),
+          easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
         }
       );
       state.runningAnimations.add(animation);
@@ -886,9 +900,11 @@ async function animateQuickSort(startIndex = 0) {
         break;
       case 'pivot':
         setPivot(step.index);
+        state.cards[step.index]?.classList.add('pivot-selected');
         highlightRange(step.left, step.right);
         updateStatus(`Paso ${stepNumber}: Se elige el pivote ${step.pivotValue} en la posición ${step.index + 1}.`);
         if (!(await waitForStep(0.9, runId))) return false;
+        state.cards[step.index]?.classList.remove('pivot-selected');
         break;
       case 'pointer': {
         const pointerIndex = step.index < state.cards.length ? step.index : null;
@@ -925,14 +941,14 @@ async function animateQuickSort(startIndex = 0) {
           if (!(await waitForStep(0.8, runId))) return false;
           fromCard.classList.remove('accepted');
         } else {
-          fromCard.classList.add('swapping');
-          toCard.classList.add('swapping');
+          fromCard.classList.add('swapping', 'swap-source');
+          toCard.classList.add('swapping', 'swap-target');
           updateStatus(`Paso ${stepNumber}: Intercambiamos ${state.numbers[from]} con ${state.numbers[to]} para llevarlo al sub-arreglo izquierdo.`);
           if (!(await waitForStep(0.45, runId))) return false;
           swapState(from, to);
           if (!(await waitForStep(0.9, runId))) return false;
-          fromCard.classList.remove('swapping');
-          toCard.classList.remove('swapping');
+          fromCard.classList.remove('swapping', 'swap-source');
+          toCard.classList.remove('swapping', 'swap-target');
         }
         break;
       }
@@ -950,22 +966,24 @@ async function animateQuickSort(startIndex = 0) {
         const pivotCard = state.cards[from];
         const targetCard = state.cards[to];
         if (!pivotCard || !targetCard) break;
-        pivotCard.classList.add('swapping');
-        targetCard.classList.add('swapping');
+        pivotCard.classList.add('swapping', 'pivot-moving', 'swap-source');
+        targetCard.classList.add('swapping', 'swap-target');
         updateStatus(`Paso ${stepNumber}: Colocamos el pivote ${pivotValue} en su lugar definitivo.`);
         if (!(await waitForStep(0.45, runId))) return false;
         swapState(from, to);
         setPivot(to);
         if (!(await waitForStep(0.9, runId))) return false;
-        pivotCard.classList.remove('swapping');
-        targetCard.classList.remove('swapping');
+        pivotCard.classList.remove('swapping', 'pivot-moving', 'swap-source');
+        targetCard.classList.remove('swapping', 'swap-target');
         break;
       }
       case 'pivot-placed':
         setPivot(step.index);
         markSorted(step.index);
+        state.cards[step.index]?.classList.add('pivot-placed');
         updateStatus(`Paso ${stepNumber}: El pivote ${step.pivotValue} queda fijo en la posición ${step.index + 1}.`);
         if (!(await waitForStep(0.7, runId))) return false;
+        state.cards[step.index]?.classList.remove('pivot-placed');
         break;
       case 'single':
         markSorted(step.index);

@@ -1029,6 +1029,12 @@ button.tree-node.has-children:hover {
   box-shadow: 0 18px 30px rgba(245, 158, 11, 0.4);
 }
 
+.number-card.pivot-selected {
+  animation: pivot-select 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+  outline: 4px solid rgba(245, 158, 11, 0.32);
+  outline-offset: 5px;
+}
+
 .number-card.comparing {
   outline: 4px solid rgba(59, 130, 246, 0.55);
   transform: translateY(-6px) scale(1.05);
@@ -1045,7 +1051,30 @@ button.tree-node.has-children:hover {
 }
 
 .number-card.swapping {
-  animation: float 0.6s ease-in-out infinite alternate;
+  animation: swap-ready 0.6s ease-in-out infinite alternate;
+  outline: 3px solid rgba(249, 115, 22, 0.35);
+  z-index: 3;
+}
+
+.number-card.swap-source {
+  box-shadow:
+    0 0 0 5px rgba(249, 115, 22, 0.16),
+    0 20px 38px rgba(249, 115, 22, 0.34);
+}
+
+.number-card.swap-target {
+  box-shadow:
+    0 0 0 5px rgba(14, 165, 233, 0.16),
+    0 20px 38px rgba(14, 165, 233, 0.3);
+}
+
+.number-card.pivot-moving {
+  animation: pivot-move-glow 0.6s ease-in-out infinite alternate;
+  outline-color: rgba(245, 158, 11, 0.62);
+}
+
+.number-card.pivot-placed {
+  animation: pivot-placed 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .number-card.sorted {
@@ -1364,12 +1393,64 @@ body,
   }
 }
 
-@keyframes float {
+@keyframes pivot-select {
+  0% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 18px 30px rgba(245, 158, 11, 0.4);
+  }
+  38% {
+    transform: translateY(-14px) scale(1.15) rotate(-2deg);
+    box-shadow:
+      0 0 0 12px rgba(245, 158, 11, 0.16),
+      0 28px 48px rgba(245, 158, 11, 0.48);
+  }
+  70% {
+    transform: translateY(-6px) scale(1.06) rotate(1deg);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 18px 30px rgba(245, 158, 11, 0.4);
+  }
+}
+
+@keyframes swap-ready {
   from {
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
   to {
-    transform: translateY(-8px);
+    transform: translateY(-10px) scale(1.06);
+  }
+}
+
+@keyframes pivot-move-glow {
+  from {
+    transform: translateY(0) scale(1.03);
+    box-shadow:
+      0 0 0 5px rgba(245, 158, 11, 0.18),
+      0 20px 38px rgba(245, 158, 11, 0.36);
+  }
+  to {
+    transform: translateY(-12px) scale(1.1);
+    box-shadow:
+      0 0 0 9px rgba(245, 158, 11, 0.12),
+      0 28px 48px rgba(245, 158, 11, 0.48);
+  }
+}
+
+@keyframes pivot-placed {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 18px 36px rgba(79, 70, 229, 0.4);
+  }
+  45% {
+    transform: scale(1.16);
+    box-shadow:
+      0 0 0 12px rgba(16, 185, 129, 0.18),
+      0 26px 46px rgba(16, 185, 129, 0.42);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 18px 36px rgba(79, 70, 229, 0.4);
   }
 }
 
@@ -1415,6 +1496,14 @@ body,
 
   .number-display.bar-view .number-card {
     transition: none;
+  }
+
+  .number-card.updated,
+  .number-card.pivot-selected,
+  .number-card.swapping,
+  .number-card.pivot-moving,
+  .number-card.pivot-placed {
+    animation: none;
   }
 
   .button-icon {
