@@ -33,6 +33,10 @@ const progressTrack = document.getElementById('progressTrack');
 const progressFill = document.getElementById('progressFill');
 const cardViewButton = document.getElementById('cardViewButton');
 const barViewButton = document.getElementById('barViewButton');
+const treeZoomOutButton = document.getElementById('treeZoomOutButton');
+const treeZoomResetButton = document.getElementById('treeZoomResetButton');
+const treeZoomInButton = document.getElementById('treeZoomInButton');
+const treeZoomValue = document.getElementById('treeZoomValue');
 
 const state = {
   inputCount: DEFAULT_INPUT_COUNT,
@@ -57,11 +61,13 @@ const state = {
   pivotIndex: null,
   pointerIndex: null,
   visualMode: 'cards',
+  treeZoom: 1,
 };
 
 init();
 
 function init() {
+  setTreeZoom(1);
   createInputs();
   renderNumbers(state.numbers);
   attachEvents();
@@ -72,6 +78,9 @@ function init() {
 }
 
 function attachEvents() {
+  treeZoomOutButton.addEventListener('click', () => setTreeZoom(state.treeZoom - 0.1));
+  treeZoomResetButton.addEventListener('click', () => setTreeZoom(1));
+  treeZoomInButton.addEventListener('click', () => setTreeZoom(state.treeZoom + 0.1));
   cardViewButton.addEventListener('click', () => setVisualMode('cards'));
   barViewButton.addEventListener('click', () => setVisualMode('bars'));
   sortButton.addEventListener('click', handleSortClick);
@@ -122,6 +131,15 @@ function setVisualMode(mode) {
   barViewButton.classList.toggle('active', barsEnabled);
   cardViewButton.setAttribute('aria-pressed', String(!barsEnabled));
   barViewButton.setAttribute('aria-pressed', String(barsEnabled));
+}
+
+function setTreeZoom(value) {
+  const nextZoom = Math.min(1.6, Math.max(0.6, Math.round(value * 10) / 10));
+  state.treeZoom = nextZoom;
+  recursionTreeContainer.style.setProperty('--tree-zoom', String(nextZoom));
+  treeZoomValue.textContent = `${Math.round(nextZoom * 100)}%`;
+  treeZoomOutButton.disabled = nextZoom <= 0.6;
+  treeZoomInButton.disabled = nextZoom >= 1.6;
 }
 
 function applyInputCount() {
@@ -545,9 +563,16 @@ function renderRecursionTree(root) {
 
 function createRecursionTreeItem(node) {
   const item = document.createElement('li');
-  const nodeElement = document.createElement('div');
+  const hasChildren = node.children.length > 0;
+  const nodeElement = document.createElement(hasChildren ? 'button' : 'div');
+  item.className = 'tree-item';
   nodeElement.className = 'tree-node pending';
   nodeElement.dataset.nodeId = node.id;
+  if (hasChildren) {
+    nodeElement.type = 'button';
+    nodeElement.classList.add('has-children');
+    nodeElement.setAttribute('aria-expanded', 'true');
+  }
 
   const range = document.createElement('span');
   range.textContent =
@@ -565,6 +590,16 @@ function createRecursionTreeItem(node) {
   nodeElement.appendChild(range);
   nodeElement.appendChild(values);
   nodeElement.appendChild(pivot);
+
+  let collapseIndicator = null;
+  if (hasChildren) {
+    collapseIndicator = document.createElement('span');
+    collapseIndicator.className = 'tree-collapse-indicator';
+    collapseIndicator.setAttribute('aria-hidden', 'true');
+    collapseIndicator.textContent = '−';
+    nodeElement.appendChild(collapseIndicator);
+  }
+
   item.appendChild(nodeElement);
   state.recursionNodeElements.set(node.id, { element: nodeElement, node });
 
@@ -574,6 +609,12 @@ function createRecursionTreeItem(node) {
       children.appendChild(createRecursionTreeItem(child));
     });
     item.appendChild(children);
+    nodeElement.addEventListener('click', () => {
+      const collapsed = item.classList.toggle('collapsed');
+      children.hidden = collapsed;
+      nodeElement.setAttribute('aria-expanded', String(!collapsed));
+      collapseIndicator.textContent = collapsed ? '+' : '−';
+    });
   }
 
   return item;
@@ -639,31 +680,105 @@ function updateProgress(stepIndex) {
   progressTrack.classList.toggle('complete', percentage === 100);
 }
 
+function getHistoryMetadata(step) {
+  if (!step) {
+    return {
+      type: 'segment',
+      icon: '•',
+      label: 'Paso',
+    };
+  }
+
+  switch (step.type) {
+    case 'compare':
+    case 'greater':
+    case 'pointer':
+      return {
+        type: 'comparison',
+        icon: '⇄',
+        label: 'Comparación',
+      };
+    case 'swap-or-accept':
+      return step.from === step.to
+        ? {
+            type: 'comparison',
+            icon: '✓',
+            label: 'Aceptado',
+          }
+        : {
+            type: 'swap',
+            icon: '↔',
+            label: 'Intercambio',
+          };
+    case 'pivot':
+    case 'pivot-swap':
+    case 'pivot-placed':
+      return {
+        type: 'pivot',
+        icon: '◆',
+        label: 'Pivote',
+      };
+    case 'sorted-all':
+      return {
+        type: 'complete',
+        icon: '★',
+        label: 'Final',
+      };
+    default:
+      return {
+        type: 'segment',
+        icon: '▣',
+        label: 'Segmento',
+      };
+  }
+}
+
 function renderStepHistory() {
   stepHistoryContainer.innerHTML = '';
   state.historyButtons = [];
   state.maxReachedStepIndex = -1;
 
   state.stepFrames.forEach((frame, index) => {
+    const metadata = getHistoryMetadata(state.steps[index]);
     const item = document.createElement('li');
     const button = document.createElement('button');
+    const icon = document.createElement('span');
+    const content = document.createElement('span');
+    const meta = document.createElement('span');
     const stepNumber = document.createElement('span');
+    const typeLabel = document.createElement('span');
     const operation = document.createElement('span');
 
     item.hidden = true;
+    item.className = `history-item history-${metadata.type}`;
     button.type = 'button';
-    button.className = 'history-button';
+    button.className = `history-button history-button-${metadata.type}`;
     button.disabled = true;
     button.title = frame.status;
+    button.setAttribute(
+      'aria-label',
+      `Ir al paso ${index + 1}: ${metadata.label}. ${frame.status.replace(/^Paso \d+:\s*/, '')}`
+    );
     button.addEventListener('click', () => handleHistoryNavigation(index));
 
+    icon.className = 'history-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = metadata.icon;
+    content.className = 'history-content';
+    meta.className = 'history-meta';
     stepNumber.className = 'history-step-number';
     stepNumber.textContent = `Paso ${index + 1}`;
+    typeLabel.className = 'history-type';
+    typeLabel.textContent = metadata.label;
     operation.className = 'history-operation';
     operation.textContent = frame.status.replace(/^Paso \d+:\s*/, '');
 
-    button.appendChild(stepNumber);
-    button.appendChild(operation);
+    meta.appendChild(stepNumber);
+    meta.appendChild(typeLabel);
+    content.appendChild(meta);
+    content.appendChild(operation);
+    button.appendChild(icon);
+    button.appendChild(content);
     item.appendChild(button);
     stepHistoryContainer.appendChild(item);
     state.historyButtons.push(button);
@@ -679,6 +794,7 @@ function updateStepHistory(stepIndex) {
     const isCurrent = index === stepIndex;
     const wasReached = index <= state.maxReachedStepIndex;
     button.parentElement.hidden = !wasReached;
+    button.parentElement.classList.toggle('history-visible-last', index === state.maxReachedStepIndex);
     button.disabled = !wasReached;
     button.classList.toggle('visited', wasReached && !isCurrent);
     button.classList.toggle('current', isCurrent);

@@ -81,10 +81,40 @@
       </section>
 
       <section class="recursion-panel panel-card" aria-labelledby="recursion-title">
-        <h2 id="recursion-title">Árbol de recursión</h2>
+        <div class="panel-header tree-header">
+          <h2 id="recursion-title">Árbol de recursión</h2>
+          <div class="tree-tools" role="group" aria-label="Controles del árbol">
+            <button
+              id="treeZoomOutButton"
+              type="button"
+              class="ghost tree-tool-button"
+              aria-label="Alejar árbol"
+              title="Alejar"
+            >
+              −
+            </button>
+            <button
+              id="treeZoomResetButton"
+              type="button"
+              class="ghost tree-zoom-value"
+              title="Restablecer zoom"
+            >
+              <span id="treeZoomValue">100%</span>
+            </button>
+            <button
+              id="treeZoomInButton"
+              type="button"
+              class="ghost tree-tool-button"
+              aria-label="Acercar árbol"
+              title="Acercar"
+            >
+              +
+            </button>
+          </div>
+        </div>
         <p class="recursion-description">
           Cada nodo representa una llamada a QuickSort. El nodo naranja está activo y
-          los nodos verdes ya fueron divididos.
+          los nodos verdes ya fueron divididos. Haz clic en un nodo para contraer sus hijos.
         </p>
         <div id="recursionTree" class="recursion-tree">
           <p class="tree-placeholder">Inicia la animación para generar el árbol.</p>
