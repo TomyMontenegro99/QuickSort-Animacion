@@ -709,6 +709,41 @@ button.tree-node.has-children:hover {
   line-height: 1.5;
 }
 
+.history-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-bottom: 0.9rem;
+}
+
+.history-legend-item {
+  --history-color: #64748b;
+  --history-soft: rgba(100, 116, 139, 0.12);
+  --history-border: rgba(100, 116, 139, 0.28);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.38rem 0.62rem;
+  border: 1px solid var(--history-border);
+  border-radius: 999px;
+  background: var(--history-soft);
+  color: var(--history-color);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.history-legend-icon {
+  display: inline-grid;
+  width: 1.25rem;
+  height: 1.25rem;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--history-color);
+  color: white;
+  font-size: 0.72rem;
+  line-height: 1;
+}
+
 .step-history {
   display: grid;
   gap: 0;
@@ -1278,6 +1313,14 @@ html[data-theme="dark"] .history-icon {
 
 html[data-theme="dark"] .history-type {
   background: rgba(15, 23, 42, 0.55);
+}
+
+html[data-theme="dark"] .history-legend-item {
+  background: rgba(15, 23, 42, 0.5);
+}
+
+html[data-theme="dark"] .history-legend-icon {
+  box-shadow: 0 0 0 2px #0f172a;
 }
 
 html[data-theme="dark"] .number-card:not(.pivot):not(.accepted):not(.rejected):not(.sorted) {
